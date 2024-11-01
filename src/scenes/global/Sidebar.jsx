@@ -136,14 +136,14 @@ const Sidebar = () => {
             </Typography>
             <Item
               title="Thông tin người dùng"
-              to="/team"
+              to="/listUsers"
               icon={<PeopleOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Contacts Information"
-              to="/contacts"
+              title="Hồ sơ đợi duyệt"
+              to="/pendingDrivers"
               icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}

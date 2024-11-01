@@ -3,9 +3,9 @@ import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
-import Team from "./scenes/team";
+import ListUsers from "./scenes/listUser";
 import Invoices from "./scenes/invoices";
-import Contacts from "./scenes/contacts";
+import PendingDrivers from "./scenes/pendingDrivers";
 import Bar from "./scenes/bar";
 import Form from "./scenes/form";
 import Line from "./scenes/line";
@@ -38,8 +38,11 @@ function AppContent() {
                 {token ? (
                   <>
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/team" element={<Team />} />
-                    <Route path="/contacts" element={<Contacts />} />
+                    <Route path="/listUsers" element={<ListUsers />} />
+                    <Route
+                      path="/pendingDrivers"
+                      element={<PendingDrivers />}
+                    />
                     <Route path="/invoices" element={<Invoices />} />
                     <Route path="/form" element={<Form />} />
                     <Route path="/bar" element={<Bar />} />
