@@ -1,3 +1,4 @@
+import api from "../../api/axiosConfig";
 import {
   Box,
   CircularProgress,
@@ -25,9 +26,7 @@ const ListLockedUsers = () => {
 
   const unlockDriver = async (driverId) => {
     try {
-      const response = await axios.post(
-        `http://localhost:3000/admin/drivers/${driverId}/unlock`
-      );
+      const response = await api.post(`/drivers/${driverId}/unlock`);
       setSnackbarMessage(response.data.message); // Lấy thông điệp từ phản hồi API
       setSnackbarSeverity("success");
       setOpenSnackbar(true); // Mở Snackbar khi unlock thành công
@@ -55,9 +54,7 @@ const ListLockedUsers = () => {
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3000/admin/getLockedDrivers"
-        );
+        const response = await api.get("/getLockedDrivers");
         setDrivers(response.data.drivers);
       } catch (err) {
         // Kiểm tra mã trạng thái và đặt thông báo lỗi tương ứng

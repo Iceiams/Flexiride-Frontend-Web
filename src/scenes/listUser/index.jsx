@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../api/axiosConfig";
 import {
   Box,
   Typography,
@@ -18,14 +18,6 @@ import {
   DialogTitle,
   DialogContent,
 } from "@mui/material";
-
-const api = axios.create({
-  baseURL: "http://localhost:3000/admin",
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-});
 
 const ListUsers = () => {
   const [data, setData] = useState([]);
@@ -51,8 +43,14 @@ const ListUsers = () => {
       console.log("Fetched data:", fetchedData);
       setData(fetchedData);
     } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Không thể lấy dữ liệu");
+      if (err.response && err.response.status === 401) {
+        setError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        // Redirect to login page
+        // window.location.href = "/login"; // Hoặc sử dụng navigate từ react-router
+      } else {
+        console.error("Error fetching data:", err);
+        setError("Không thể lấy dữ liệu");
+      }
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,4 @@
+import api from "../../api/axiosConfig";
 import {
   Box,
   CircularProgress,
@@ -35,9 +36,7 @@ const PendingDrivers = () => {
   useEffect(() => {
     const fetchPendingDrivers = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3000/admin/drivers/pending"
-        );
+        const response = await api.get("/drivers/pending");
         const driversWithIndex = response.data.drivers.map((driver, index) => ({
           ...driver,
           index: index + 1,
@@ -56,8 +55,8 @@ const PendingDrivers = () => {
 
   const updateApprovalStatus = async (driverId, approve) => {
     try {
-      const url = `http://localhost:3000/admin/drivers/${driverId}/approve`;
-      await axios.put(url, { approve });
+      const url = `/drivers/${driverId}/approve`;
+      await api.put(url, { approve });
       setPendingDrivers((prevDrivers) =>
         prevDrivers.filter((driver) => driver._id !== driverId)
       );
