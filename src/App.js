@@ -4,7 +4,7 @@ import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
 import ListUsers from "./scenes/listUser";
-import Invoices from "./scenes/invoices";
+import ListLockedUsers from "./scenes/lockAccountUsers";
 import PendingDrivers from "./scenes/pendingDrivers";
 import Bar from "./scenes/bar";
 import Form from "./scenes/form";
@@ -43,7 +43,10 @@ function AppContent() {
                       path="/pendingDrivers"
                       element={<PendingDrivers />}
                     />
-                    <Route path="/invoices" element={<Invoices />} />
+                    <Route
+                      path="/listLockedUsers"
+                      element={<ListLockedUsers />}
+                    />
                     <Route path="/form" element={<Form />} />
                     <Route path="/bar" element={<Bar />} />
                     <Route path="/pie" element={<Pie />} />

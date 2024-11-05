@@ -8,6 +8,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
@@ -25,6 +27,11 @@ const PendingDrivers = () => {
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
 
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
   useEffect(() => {
     const fetchPendingDrivers = async () => {
       try {
@@ -39,6 +46,7 @@ const PendingDrivers = () => {
       } catch (err) {
         console.error("Error fetching pending drivers:", err);
         setError("Failed to load pending drivers");
+        showSnackbar("Failed to load pending drivers", "error");
       } finally {
         setLoading(false);
       }
@@ -53,9 +61,10 @@ const PendingDrivers = () => {
       setPendingDrivers((prevDrivers) =>
         prevDrivers.filter((driver) => driver._id !== driverId)
       );
+      showSnackbar(approve ? "Driver approved" : "Driver rejected", "success");
     } catch (error) {
       console.error("Error updating approval status:", error);
-      alert("Failed to update driver status");
+      showSnackbar("Failed to update driver status", "error");
     }
   };
 
@@ -67,6 +76,18 @@ const PendingDrivers = () => {
   const handleCloseDetail = () => {
     setOpenDetail(false);
     setSelectedDocument(null);
+  };
+
+  // Function to show snackbar with a specific message and severity
+  const showSnackbar = (message, severity) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  // Handle Snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   const columns = [
@@ -370,6 +391,18 @@ const PendingDrivers = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for success and error messages */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
