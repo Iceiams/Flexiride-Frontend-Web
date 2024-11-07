@@ -9,6 +9,7 @@ import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import { LockOpen } from "@mui/icons-material";
+import { ReviewsOutlined } from "@mui/icons-material";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
@@ -153,6 +154,14 @@ const Sidebar = () => {
               title="Tài khoản bị khóa"
               to="/listLockedUsers"
               icon={<LockOpen />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+
+            <Item
+              title="Đánh giá tài xế"
+              to="/getAllDriversWithReviews"
+              icon={<ReviewsOutlined />}
               selected={selected}
               setSelected={setSelected}
             />

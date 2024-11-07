@@ -40,6 +40,9 @@ const PendingDrivers = () => {
         const driversWithIndex = response.data.drivers.map((driver, index) => ({
           ...driver,
           index: index + 1,
+          fullName: `${driver.personalInfo?.firstName || ""} ${
+            driver.personalInfo?.lastName || ""
+          }`.trim(),
         }));
         setPendingDrivers(driversWithIndex);
       } catch (err) {

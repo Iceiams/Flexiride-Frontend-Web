@@ -1,5 +1,5 @@
-// AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext();
 
@@ -16,9 +16,8 @@ export const AuthProvider = ({ children }) => {
   const login = (adminData, token) => {
     if (adminData && token) {
       // Giả sử adminData chứa cả id và email
-      const { id, email, name } = adminData; // Tách ID và email từ adminData
+      const { id, email, name } = adminData;
 
-      // Cập nhật trạng thái
       setAdmin({ id, email, name });
       setToken(token);
 
@@ -37,14 +36,38 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
   };
 
+  // Kiểm tra token hết hạn
+  const isTokenExpired = (token) => {
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      return decoded.exp < currentTime; // Trả về true nếu token đã hết hạn
+    } catch (err) {
+      return true;
+    }
+  };
+
   useEffect(() => {
     const savedAdmin = localStorage.getItem("admin");
     const savedToken = localStorage.getItem("token");
+
+    // Kiểm tra token khi load lại trang
     if (savedAdmin && savedToken) {
-      setAdmin(JSON.parse(savedAdmin));
-      setToken(savedToken);
+      if (isTokenExpired(savedToken)) {
+        logout(); // Nếu token hết hạn, tự động đăng xuất
+      } else {
+        setAdmin(JSON.parse(savedAdmin));
+        setToken(savedToken);
+      }
     }
   }, []);
+
+  useEffect(() => {
+    // Kiểm tra token mỗi khi token được cập nhật
+    if (token && isTokenExpired(token)) {
+      logout(); // Nếu token hết hạn, tự động đăng xuất
+    }
+  }, [token]);
 
   return (
     <AuthContext.Provider value={{ admin, token, login, logout }}>

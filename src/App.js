@@ -6,6 +6,7 @@ import Dashboard from "./scenes/dashboard";
 import ListUsers from "./scenes/listUser";
 import ListLockedUsers from "./scenes/lockAccountUsers";
 import PendingDrivers from "./scenes/pendingDrivers";
+import DriverReviews from "./scenes/listFeedback";
 import Bar from "./scenes/bar";
 import Form from "./scenes/form";
 import Line from "./scenes/line";
@@ -46,6 +47,10 @@ function AppContent() {
                     <Route
                       path="/listLockedUsers"
                       element={<ListLockedUsers />}
+                    />
+                    <Route
+                      path="/getAllDriversWithReviews"
+                      element={<DriverReviews />}
                     />
                     <Route path="/form" element={<Form />} />
                     <Route path="/bar" element={<Bar />} />

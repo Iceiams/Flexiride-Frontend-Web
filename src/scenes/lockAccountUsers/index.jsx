@@ -88,7 +88,6 @@ const ListLockedUsers = () => {
       </Box>
     );
   }
-
   if (error) {
     return (
       <Box
@@ -96,9 +95,16 @@ const ListLockedUsers = () => {
         justifyContent="center"
         alignItems="center"
         height="100vh"
+        flexDirection="column"
       >
-        <Typography variant="h6" color="error">
+        <Typography variant="h4" color="textSecondary">
+          <span role="img" aria-label="info">
+            🚫
+          </span>{" "}
           {error}
+        </Typography>
+        <Typography variant="body1" color="textSecondary" mt={2}>
+          Hiện tại không có tài khoản nào đang bị khóa.
         </Typography>
       </Box>
     );

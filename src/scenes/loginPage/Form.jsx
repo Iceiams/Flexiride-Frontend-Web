@@ -18,7 +18,7 @@ import {
   titleLogin,
 } from "../../style/GlobalStyles.js";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const loginSchema = yup.object().shape({
   email: yup.string().email("Email không hợp lệ").required("Email là bắt buộc"),
@@ -37,9 +37,26 @@ const initialValuesLogin = {
 };
 
 const LoginForm = () => {
-  const { login } = useAuth();
+  const { login, logout } = useAuth(); // Thêm hàm logout từ useAuth
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response && error.response.status === 401) {
+          // Nếu gặp lỗi 401 (Token hết hạn), tự động đăng xuất và điều hướng
+          logout(); // Xóa token khỏi context
+          navigate("/login"); // Điều hướng đến trang đăng nhập
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    // Xóa interceptor khi component unmount
+    return () => axios.interceptors.response.eject(interceptor);
+  }, [logout, navigate]);
 
   const handleLogin = async (values, setFieldError) => {
     try {
@@ -77,7 +94,6 @@ const LoginForm = () => {
   };
 
   const togglePasswordVisibility = () => {
-    console.log("Icon clicked"); // Kiểm tra hàm có được gọi không
     setShowPassword((prev) => !prev);
   };
 
