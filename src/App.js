@@ -18,11 +18,15 @@ import { ColorModeContext, useMode } from "./theme";
 import Calendar from "./scenes/calendar/calendar";
 import LoginPage from "./scenes/loginPage";
 import { AuthProvider, useAuth } from "./AuthContext"; // Import AuthProvider và useAuth
+import TopbarGlobal from "./scenes/global/TopbarGlobal";
 
 function AppContent() {
   const [theme, colorMode] = useMode();
   const [isSidebar, setIsSidebar] = useState(true);
-  const { token } = useAuth(); // Lấy token từ AuthContext
+  const { token } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [view, setView] = useState("drivers"); // State to toggle between drivers and customers
 
   return (
     <ColorModeContext.Provider value={colorMode}>
@@ -30,36 +34,62 @@ function AppContent() {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <div style={{ display: "flex" }}>
-            {/* Chỉ hiển thị Sidebar nếu đã đăng nhập */}
-            {token && <Sidebar isSidebar={isSidebar} />}
+            {token && <Sidebar isSidebar={isSidebar} setView={setView} />}
             <div style={{ flexGrow: 1 }}>
-              {/* Topbar hiển thị phía trên */}
-              {token && <Topbar setIsSidebar={setIsSidebar} />}
+              {token && (
+                <>
+                  <TopbarGlobal />
+                </>
+              )}
               <Routes>
                 {token ? (
                   <>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/listUsers" element={<ListUsers />} />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <Dashboard
+                          searchQuery={searchQuery}
+                          searchResults={searchResults}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/listUsers"
+                      element={
+                        <ListUsers
+                          searchQuery={searchQuery}
+                          searchResults={searchResults}
+                        />
+                      }
+                    />
                     <Route
                       path="/pendingDrivers"
-                      element={<PendingDrivers />}
+                      element={
+                        <PendingDrivers
+                          searchQuery={searchQuery}
+                          searchResults={searchResults}
+                        />
+                      }
                     />
                     <Route
                       path="/listLockedUsers"
-                      element={<ListLockedUsers />}
+                      element={
+                        <ListLockedUsers
+                          searchQuery={searchQuery}
+                          searchResults={searchResults}
+                        />
+                      }
                     />
                     <Route
                       path="/getAllDriversWithReviews"
-                      element={<DriverReviews />}
+                      element={
+                        <DriverReviews
+                          searchQuery={searchQuery}
+                          searchResults={searchResults}
+                        />
+                      }
                     />
-                    <Route path="/form" element={<Form />} />
-                    <Route path="/bar" element={<Bar />} />
-                    <Route path="/pie" element={<Pie />} />
-                    <Route path="/line" element={<Line />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/geography" element={<Geography />} />
-                    <Route path="*" element={<Navigate to="/dashboard" />} />
+                    {/* Các route khác */}
                   </>
                 ) : (
                   <>

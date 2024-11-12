@@ -23,6 +23,7 @@ import {
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { useTheme } from "@mui/material";
 import { tokens } from "../../theme";
+import Star from "@mui/icons-material/Star";
 
 const DriverReviews = () => {
   const theme = useTheme();
@@ -36,7 +37,7 @@ const DriverReviews = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  // Dialog cho chi tiết review
+  // Dialog for review details
   const [openReviewDialog, setOpenReviewDialog] = useState(false);
   const [selectedReviews, setSelectedReviews] = useState([]);
 
@@ -51,7 +52,6 @@ const DriverReviews = () => {
         const drivers = driversResponse.data.drivers;
         const reviewCounts = reviewCountsResponse.data.reviewCounts;
 
-        // Kết hợp dữ liệu từ cả hai API và thêm index
         const combinedData = drivers.map((driver, index) => {
           const reviewData = reviewCounts.find(
             (count) => count.driverId === driver._id
@@ -106,7 +106,6 @@ const DriverReviews = () => {
       headerName: "STT",
       flex: 0.5,
     },
-
     {
       field: "fullName",
       headerName: "Họ và Tên",
@@ -140,7 +139,6 @@ const DriverReviews = () => {
       flex: 1,
       renderCell: (params) => params.row.reviewCount || 0,
     },
-
     {
       field: "reviews",
       headerName: "Chi Tiết Đánh Giá",
@@ -196,19 +194,18 @@ const DriverReviews = () => {
           columns={columns}
           getRowId={(row) => row._id}
           components={{ Toolbar: GridToolbar }}
-          filterMode="client" // Bật tính năng lọc phía client
+          filterMode="client"
           initialState={{
             pagination: {
-              paginationModel: { pageSize: 20 }, // Đặt trang mặc định là 20
+              paginationModel: { pageSize: 20 },
             },
           }}
-          pageSizeOptions={[20, 40, 60]} // Tùy chọn phân trang mới
+          pageSizeOptions={[20, 40, 60]}
           rowHeight={100}
-          //   autoHeight // Tự động điều chỉnh chiều cao
           sx={{
             "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#FFCF48", // Màu nền tiêu đề
-              color: "#FDC83C", // Màu chữ
+              backgroundColor: "#FFCF48",
+              color: "#FDC83C",
               fontWeight: "bold",
               fontSize: "15px",
             },
@@ -251,9 +248,15 @@ const DriverReviews = () => {
                 <TableBody>
                   {selectedReviews.map((review) => (
                     <TableRow key={review._id}>
-                      <TableCell>{review.account_id?.name}</TableCell>
+                      <TableCell>
+                        {review.accountInfo?.name || "Không có tên"}
+                      </TableCell>
                       <TableCell>{review.content}</TableCell>
-                      <TableCell>{review.rate} ⭐</TableCell>
+                      <TableCell>
+                        {Array.from({ length: review.rate }, (_, index) => (
+                          <Star key={index} color="warning" />
+                        ))}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

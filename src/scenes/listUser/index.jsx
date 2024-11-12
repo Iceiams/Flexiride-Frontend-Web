@@ -18,10 +18,12 @@ import {
   DialogTitle,
   DialogContent,
 } from "@mui/material";
+import Topbar from "../global/Topbar";
 
-const ListUsers = () => {
+const ListUsers = ({ searchQuery }) => {
   const [data, setData] = useState([]);
   const [view, setView] = useState("drivers");
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
@@ -29,24 +31,38 @@ const ListUsers = () => {
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = async (
+    query = "",
+    view = "drivers",
+    page = 0,
+    rowsPerPage = 5
+  ) => {
     setLoading(true);
     setError(null);
     setData([]);
 
     try {
-      const endpoint = view === "drivers" ? "/drivers" : "/customers";
-      console.log("Fetching data from:", endpoint);
+      let endpoint;
+
+      if (query) {
+        endpoint =
+          view === "drivers"
+            ? `/searchData?query=${query}&type=drivers&page=${page}&limit=${rowsPerPage}`
+            : `/searchData?query=${query}&type=customers&page=${page}&limit=${rowsPerPage}`;
+      } else {
+        endpoint =
+          view === "drivers"
+            ? `/drivers?page=${page}&limit=${rowsPerPage}`
+            : `/customers?page=${page}&limit=${rowsPerPage}`;
+      }
+
       const response = await api.get(endpoint);
       const fetchedData =
         view === "drivers" ? response.data.drivers : response.data.customers;
-      console.log("Fetched data:", fetchedData);
       setData(fetchedData);
     } catch (err) {
       if (err.response && err.response.status === 401) {
         setError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-        // Redirect to login page
-        // window.location.href = "/login"; // Hoặc sử dụng navigate từ react-router
       } else {
         console.error("Error fetching data:", err);
         setError("Không thể lấy dữ liệu");
@@ -57,17 +73,25 @@ const ListUsers = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [view]);
+    fetchData(query || searchQuery || "", view, page, rowsPerPage);
+  }, [view, page, rowsPerPage]);
+
+  const handleSearch = (query) => {
+    setQuery(query);
+    fetchData(query, view);
+  };
 
   const handleViewChange = (newView) => {
     setData([]);
     setError(null);
     setView(newView);
+    setQuery("");
+    fetchData("", newView);
   };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
+    fetchData(query, view);
   };
 
   const handleChangeRowsPerPage = (event) => {
@@ -97,7 +121,7 @@ const ListUsers = () => {
       <Typography variant="h4" sx={{ marginBottom: "20px" }}>
         Thông tin tài xế và khách hàng
       </Typography>
-
+      <Topbar onSearch={handleSearch} view={view} />
       <Box sx={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
         <Button
           variant={view === "drivers" ? "contained" : "outlined"}
@@ -120,7 +144,6 @@ const ListUsers = () => {
           Hiển thị Khách hàng
         </Button>
       </Box>
-
       {loading ? (
         <Box
           sx={{
@@ -226,7 +249,7 @@ const ListUsers = () => {
                           {item.bankAccount.bankName}
                         </TableCell>
                         <TableCell sx={{ color: "#ffffff" }}>
-                          {item.activityStatus}
+                          {item.status || "Không xác định"}
                         </TableCell>
                       </>
                     ) : (
