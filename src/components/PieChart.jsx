@@ -274,7 +274,7 @@ const Charts = () => {
 
       {/* Biểu đồ 1: Traditional Rides */}
       <div style={{ height: 400 }}>
-        <h3 style={{ textAlign: "center", fontFamily: "monospace" }}>
+        <h3 style={{ textAlign: "center", fontFamily: "Roboto, sans-serif" }}>
           BIỂU ĐỒ THEO DÕI TRẠNG THÁI DỊCH VỤ ĐẶT XE
         </h3>
         <ResponsiveBar
@@ -330,7 +330,7 @@ const Charts = () => {
                 border: "1px solid #ccc",
                 borderRadius: "3px",
                 color: "#404040",
-                fontFamily: "sans-serif",
+                fontFamily: "Roboto, sans-serif",
               }}
             >
               {/* Hình vuông hiển thị màu */}
@@ -355,7 +355,7 @@ const Charts = () => {
 
       {/* Biểu đồ 2: Carpool Rides */}
       <div style={{ height: 400, paddingTop: "50px" }}>
-        <h3 style={{ textAlign: "center", fontFamily: "monospace" }}>
+        <h3 style={{ textAlign: "center", fontFamily: "Roboto, sans-serif" }}>
           BIỂU ĐỒ THEO DÕI TRẠNG THÁI DỊCH VỤ XE GHÉP
         </h3>
         <ResponsiveBar
@@ -413,7 +413,7 @@ const Charts = () => {
                 border: "1px solid #ccc",
                 borderRadius: "3px",
                 color: "#404040",
-                fontFamily: "sans-serif",
+                fontFamily: "Roboto, sans-serif",
               }}
             >
               {/* Hình vuông hiển thị màu */}
@@ -438,7 +438,7 @@ const Charts = () => {
 
       {/* Biểu đồ 3: Total Rides Comparison */}
       <div style={{ height: 400, paddingTop: "50px" }}>
-        <h3 style={{ textAlign: "center", fontFamily: "monospace" }}>
+        <h3 style={{ textAlign: "center", fontFamily: "Roboto, sans-serif" }}>
           BIỂU ĐỒ TỔNG SỐ CHUYẾN ĐI 3 DỊCH VỤ
         </h3>
         <ResponsivePie
