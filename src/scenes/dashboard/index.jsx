@@ -2,9 +2,9 @@ import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../theme";
 import { mockTransactions } from "../../data/mockData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
-import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import CheckCircleIcon from "@mui/icons-material/ElectricBikeOutlined";
+import CarRentalOutlined from "@mui/icons-material/CarRentalOutlined";
+import PersonAddIcon from "@mui/icons-material/PersonAddAlt1Outlined";
 import TrafficIcon from "@mui/icons-material/Traffic";
 import Header from "../../components/Header";
 import LineChart from "../../components/LineChart";
@@ -13,19 +13,61 @@ import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
 import { useAuth } from "../../AuthContext";
+import api from "../../api/axiosConfig";
+import React, { useEffect, useState } from "react";
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { admin } = useAuth();
   console.log();
+  const [onlineDrivers, setOnlineDrivers] = useState(0);
+  const [totalDrivers, setTotalDrivers] = useState(0);
+  const [onlinePercentage, setOnlinePercentage] = useState("0");
+  const [completedTrips, setCompletedTrips] = useState({
+    traditional: 0,
+    carpool: 0,
+  });
+  // Hàm gọi API để lấy số tài xế online, tổng tài xế, và tỷ lệ phần trăm
+  const fetchOnlineDrivers = async () => {
+    try {
+      const response = await api.get("/countDriversOnline");
+      const {
+        onlineDrivers: count,
+        totalDrivers: total,
+        onlinePercentage: percentage,
+      } = response.data;
+
+      setOnlineDrivers(count);
+      setTotalDrivers(total);
+      setOnlinePercentage(percentage);
+    } catch (error) {
+      console.error("Error fetching online drivers data:", error);
+    }
+  };
+
+  const fetchCompletedTrips = async () => {
+    try {
+      const response = await api.get("/getCompletedTripCounts");
+      setCompletedTrips(response.data);
+    } catch (error) {
+      console.error("Error fetching completed trips:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompletedTrips();
+  }, []); // Fetch data when the component mounts
+
+  useEffect(() => {
+    fetchOnlineDrivers();
+  }, []); // Gọi API khi component được render lần đầu
+
   return (
     <Box m="20px">
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
-        <p>ID: {admin ? admin.id : "N/A"}</p>
-        <p>Email: {admin ? admin.email : "N/A"}</p>
+        <Header title="DASHBOARD" subtitle="Welcome to FRide dashboard" />
 
         <Box>
           <Button
@@ -59,48 +101,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="12,361"
-            subtitle="Emails Sent"
-            progress="0.75"
-            increase="+14%"
-            icon={
-              <EmailIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="431,225"
-            subtitle="Sales Obtained"
-            progress="0.50"
-            increase="+21%"
-            icon={
-              <PointOfSaleIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="32,441"
-            subtitle="New Clients"
-            progress="0.30"
-            increase="+5%"
+            title={onlineDrivers}
+            subtitle="Drivers Online"
+            progress={onlinePercentage}
+            increase={totalDrivers}
             icon={
               <PersonAddIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -108,6 +112,60 @@ const Dashboard = () => {
             }
           />
         </Box>
+        <Box
+          gridColumn="span 3"
+          backgroundColor={colors.primary[400]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={completedTrips.traditional}
+            subtitle="Completed Booking"
+            progress={
+              completedTrips.traditional /
+              (completedTrips.traditional + completedTrips.carpool)
+            }
+            increase={`${(
+              (completedTrips.traditional /
+                (completedTrips.traditional + completedTrips.carpool)) *
+              100
+            ).toFixed(2)}%`}
+            icon={
+              <CheckCircleIcon
+                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+              />
+            }
+          />
+        </Box>
+
+        <Box
+          gridColumn="span 3"
+          backgroundColor={colors.primary[400]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={completedTrips.carpool}
+            subtitle="Completed Carpool"
+            progress={
+              completedTrips.carpool /
+              (completedTrips.traditional + completedTrips.carpool)
+            }
+            increase={`${(
+              (completedTrips.carpool /
+                (completedTrips.traditional + completedTrips.carpool)) *
+              100
+            ).toFixed(2)}%`}
+            icon={
+              <CarRentalOutlined
+                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+              />
+            }
+          />
+        </Box>
+
         <Box
           gridColumn="span 3"
           backgroundColor={colors.primary[400]}
@@ -260,7 +318,7 @@ const Dashboard = () => {
             Sales Quantity
           </Typography>
           <Box height="250px" mt="-20px">
-            <BarChart isDashboard={true} />
+            {/* <BarChart isDashboard={true} /> */}
           </Box>
         </Box>
         <Box

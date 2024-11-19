@@ -1,84 +1,56 @@
+import React from "react";
+import { MapContainer, TileLayer, GeoJSON, LayersControl } from "react-leaflet";
 import { useTheme } from "@mui/material";
-import { ResponsiveChoropleth } from "@nivo/geo";
-import { geoFeatures } from "../data/mockGeoFeatures";
+import vietNamGeoJSON from "../data/export"; // GeoJSON của Việt Nam
 import { tokens } from "../theme";
-import { mockGeographyData as data } from "../data/mockData";
 
 const GeographyChart = ({ isDashboard = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  // Hàm tùy chỉnh hiển thị từng vùng trên bản đồ
+  const onEachFeature = (feature, layer) => {
+    if (feature.properties && feature.properties.name) {
+      layer.bindPopup(`<b>${feature.properties.name}</b>`);
+    }
+  };
+
+  // Hàm tùy chỉnh style cho từng vùng
+  const style = (feature) => ({
+    fillColor:
+      feature.properties.traffic_density === "high"
+        ? "red"
+        : colors.greenAccent[400],
+    weight: 2,
+    opacity: 1,
+    color: colors.grey[100],
+    dashArray: "3",
+    fillOpacity: 0.7,
+  });
+
   return (
-    <ResponsiveChoropleth
-      data={data}
-      theme={{
-        axis: {
-          domain: {
-            line: {
-              stroke: colors.grey[100],
-            },
-          },
-          legend: {
-            text: {
-              fill: colors.grey[100],
-            },
-          },
-          ticks: {
-            line: {
-              stroke: colors.grey[100],
-              strokeWidth: 1,
-            },
-            text: {
-              fill: colors.grey[100],
-            },
-          },
-        },
-        legends: {
-          text: {
-            fill: colors.grey[100],
-          },
-        },
-      }}
-      features={geoFeatures.features}
-      margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-      domain={[0, 1000000]}
-      unknownColor="#666666"
-      label="properties.name"
-      valueFormat=".2s"
-      projectionScale={isDashboard ? 40 : 150}
-      projectionTranslation={isDashboard ? [0.49, 0.6] : [0.5, 0.5]}
-      projectionRotation={[0, 0, 0]}
-      borderWidth={1.5}
-      borderColor="#ffffff"
-      legends={
-        !isDashboard
-          ? [
-              {
-                anchor: "bottom-left",
-                direction: "column",
-                justify: true,
-                translateX: 20,
-                translateY: -100,
-                itemsSpacing: 0,
-                itemWidth: 94,
-                itemHeight: 18,
-                itemDirection: "left-to-right",
-                itemTextColor: colors.grey[100],
-                itemOpacity: 0.85,
-                symbolSize: 18,
-                effects: [
-                  {
-                    on: "hover",
-                    style: {
-                      itemTextColor: "#ffffff",
-                      itemOpacity: 1,
-                    },
-                  },
-                ],
-              },
-            ]
-          : undefined
-      }
-    />
+    <MapContainer
+      center={[15.87, 100.9925]} // Tâm bản đồ Việt Nam
+      zoom={5}
+      style={{ height: isDashboard ? "215px" : "600px", width: "100%" }}
+    >
+      {/* Lớp nền bản đồ */}
+      <LayersControl position="topright">
+        <LayersControl.BaseLayer checked name="Bản đồ OSM">
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+        </LayersControl.BaseLayer>
+        <LayersControl.Overlay checked name="Dữ liệu giao thông (giả lập)">
+          <GeoJSON
+            data={vietNamGeoJSON}
+            style={style}
+            onEachFeature={onEachFeature}
+          />
+        </LayersControl.Overlay>
+      </LayersControl>
+    </MapContainer>
   );
 };
 

@@ -181,7 +181,7 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="Calendar"
+              title="Lịch Trình"
               to="/calendar"
               icon={<CalendarTodayOutlinedIcon />}
               selected={selected}
@@ -200,17 +200,17 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Charts
+              Theo Dõi Thống Kê
             </Typography>
             <Item
-              title="Bar Chart"
+              title="Tổng Chuyến Đi"
               to="/bar"
               icon={<BarChartOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Pie Chart"
+              title="Trạng Thái Chuyến Đi"
               to="/pie"
               icon={<PieChartOutlineOutlinedIcon />}
               selected={selected}
