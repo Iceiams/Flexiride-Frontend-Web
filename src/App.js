@@ -8,7 +8,7 @@ import ListLockedUsers from "./scenes/lockAccountUsers";
 import PendingDrivers from "./scenes/pendingDrivers";
 import DriverReviews from "./scenes/listFeedback";
 import Bar from "./scenes/bar";
-import Form from "./scenes/form";
+import PriceService from "./scenes/priceService";
 import Line from "./scenes/line";
 import Pie from "./scenes/pie";
 import FAQ from "./scenes/faq";
@@ -19,6 +19,7 @@ import Calendar from "./scenes/calendar/calendar";
 import LoginPage from "./scenes/loginPage";
 import { AuthProvider, useAuth } from "./AuthContext"; // Import AuthProvider và useAuth
 import TopbarGlobal from "./scenes/global/TopbarGlobal";
+import VoucherList from "./scenes/voucher";
 import "leaflet/dist/leaflet.css";
 
 function AppContent() {
@@ -90,7 +91,9 @@ function AppContent() {
                         />
                       }
                     />
-                    <Route path="/form" element={<Form />} />
+
+                    <Route path="/voucher" element={<VoucherList />} />
+                    <Route path="/priceService" element={<PriceService />} />
                     <Route path="/bar" element={<Bar />} />
                     <Route path="/pie" element={<Pie />} />
                     <Route path="/line" element={<Line />} />

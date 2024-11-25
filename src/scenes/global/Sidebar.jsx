@@ -10,7 +10,8 @@ import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import { LockOpen } from "@mui/icons-material";
 import { ReviewsOutlined } from "@mui/icons-material";
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import PriceChange from "@mui/icons-material/PriceChange";
+import DiscountOutlined from "@mui/icons-material/DiscountOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
@@ -174,9 +175,9 @@ const Sidebar = () => {
               Pages
             </Typography>
             <Item
-              title="Profile Form"
-              to="/form"
-              icon={<PersonOutlinedIcon />}
+              title="Quản lý giá dịch vụ"
+              to="/priceService"
+              icon={<PriceChange />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -213,6 +214,13 @@ const Sidebar = () => {
               title="Trạng Thái Chuyến Đi"
               to="/pie"
               icon={<PieChartOutlineOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Chương trình Voucher"
+              to="/voucher"
+              icon={<DiscountOutlined />}
               selected={selected}
               setSelected={setSelected}
             />
