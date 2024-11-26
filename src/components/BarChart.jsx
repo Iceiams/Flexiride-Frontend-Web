@@ -25,7 +25,7 @@ const RideStatisticsChart = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statsData, setStatsData] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("completed");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isCustomApplied, setIsCustomApplied] = useState(false);
@@ -147,7 +147,7 @@ const RideStatisticsChart = () => {
 
   const statusFilters = useMemo(
     () => [
-      { value: "all", label: "Tất cả trạng thái" },
+      // { value: "all", label: "Tất cả trạng thái" },
       { value: "completed", label: "Hoàn thành" },
       { value: "canceled", label: "Đã hủy" },
     ],
@@ -160,7 +160,7 @@ const RideStatisticsChart = () => {
 
     const title = `Thống Kê Số Chuyến Đi - Trạng Thái: ${
       statusFilters.find((filter) => filter.value === statusFilter)?.label ||
-      "Tất cả"
+      "Hoàn Thành"
     }`;
 
     worksheet.addRow([title]);
@@ -345,7 +345,33 @@ const RideStatisticsChart = () => {
           </Typography>
         </Box>
       ) : (
-        <Box height="450px">
+        <Box position="relative" height="450px">
+          {/* Custom Legend cho trục Y */}
+          <Typography
+            style={{
+              position: "absolute",
+              top: "10px",
+              left: "0", // Căn chỉnh với trục Y
+              transform: "translate(20%, 0)", // Dịch sang trái một nửa chiều rộng để căn giữa
+              textAlign: "center",
+              fontSize: "14px",
+              color: colors.grey[100],
+            }}
+          >
+            Số chuyến đi
+          </Typography>
+          <Typography
+            style={{
+              position: "absolute",
+              bottom: "140px",
+              right: "40px", // Đặt chữ ở bên phải
+              textAlign: "center",
+              fontSize: "14px",
+              color: colors.grey[100],
+            }}
+          >
+            Thời gian
+          </Typography>
           <ResponsiveBar
             data={statsData}
             keys={["Thuê Tài Xế", "Đặt Xe", "Xe Ghép"]}
@@ -356,7 +382,7 @@ const RideStatisticsChart = () => {
                 ? "dateRange"
                 : "tháng"
             }
-            margin={{ top: 50, right: 130, bottom: 80, left: 60 }}
+            margin={{ top: 50, right: 130, bottom: 150, left: 60 }}
             padding={0.3}
             groupMode="grouped"
             valueScale={{ type: "linear" }}
@@ -409,31 +435,28 @@ const RideStatisticsChart = () => {
             }}
             axisBottom={{
               tickSize: 5,
-              tickPadding: 15,
+              tickPadding: 5,
               tickRotation: 0,
-              legend: "Thời gian",
-              legendPosition: "middle",
-              legendOffset: 60,
+              legend: "",
             }}
             axisLeft={{
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: "Số chuyến đi",
-              legendPosition: "middle",
-              legendOffset: -40,
+              legend: "",
             }}
+            label={() => null} // Ẩn giá trị hiển thị trên cột
             labelSkipWidth={12}
             labelSkipHeight={12}
             legends={[
               {
                 dataFrom: "keys",
-                anchor: "bottom-right",
-                direction: "column",
+                anchor: "bottom",
+                direction: "row",
                 justify: false,
-                translateX: 120,
-                translateY: 0,
-                itemsSpacing: 2,
+                translateX: 0, // Căn giữa theo trục X
+                translateY: 90, // Đặt khoảng cách dưới trục X
+                itemsSpacing: 10,
                 itemWidth: 100,
                 itemHeight: 20,
                 itemDirection: "left-to-right",

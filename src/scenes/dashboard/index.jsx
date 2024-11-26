@@ -3,6 +3,7 @@ import { tokens } from "../../theme";
 import { mockTransactions } from "../../data/mockData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import CheckCircleIcon from "@mui/icons-material/ElectricBikeOutlined";
+import Person3Sharp from "@mui/icons-material/Person3Sharp";
 import CarRentalOutlined from "@mui/icons-material/CarRentalOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAddAlt1Outlined";
 import TrafficIcon from "@mui/icons-material/Traffic";
@@ -27,6 +28,7 @@ const Dashboard = () => {
   const [completedTrips, setCompletedTrips] = useState({
     traditional: 0,
     carpool: 0,
+    hireDriver: 0,
   });
   // Hàm gọi API để lấy số tài xế online, tổng tài xế, và tỷ lệ phần trăm
   const fetchOnlineDrivers = async () => {
@@ -102,7 +104,7 @@ const Dashboard = () => {
         >
           <StatBox
             title={onlineDrivers}
-            subtitle="Drivers Online"
+            subtitle="Tài xế hoạt động"
             progress={onlinePercentage}
             increase={totalDrivers}
             icon={
@@ -124,11 +126,15 @@ const Dashboard = () => {
             subtitle="Completed Booking"
             progress={
               completedTrips.traditional /
-              (completedTrips.traditional + completedTrips.carpool)
+              (completedTrips.traditional +
+                completedTrips.carpool +
+                completedTrips.hireDriver)
             }
             increase={`${(
               (completedTrips.traditional /
-                (completedTrips.traditional + completedTrips.carpool)) *
+                (completedTrips.traditional +
+                  completedTrips.carpool +
+                  completedTrips.hireDriver)) *
               100
             ).toFixed(2)}%`}
             icon={
@@ -151,11 +157,15 @@ const Dashboard = () => {
             subtitle="Completed Carpool"
             progress={
               completedTrips.carpool /
-              (completedTrips.traditional + completedTrips.carpool)
+              (completedTrips.traditional +
+                completedTrips.carpool +
+                completedTrips.hireDriver)
             }
             increase={`${(
               (completedTrips.carpool /
-                (completedTrips.traditional + completedTrips.carpool)) *
+                (completedTrips.traditional +
+                  completedTrips.carpool +
+                  completedTrips.hireDriver)) *
               100
             ).toFixed(2)}%`}
             icon={
@@ -165,7 +175,6 @@ const Dashboard = () => {
             }
           />
         </Box>
-
         <Box
           gridColumn="span 3"
           backgroundColor={colors.primary[400]}
@@ -174,12 +183,23 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="1,325,134"
-            subtitle="Traffic Received"
-            progress="0.80"
-            increase="+43%"
+            title={completedTrips.hireDriver}
+            subtitle="Completed Hire Driver"
+            progress={
+              completedTrips.hireDriver /
+              (completedTrips.traditional +
+                completedTrips.carpool +
+                completedTrips.hireDriver)
+            }
+            increase={`${(
+              (completedTrips.hireDriver /
+                (completedTrips.traditional +
+                  completedTrips.carpool +
+                  completedTrips.hireDriver)) *
+              100
+            ).toFixed(2)}%`}
             icon={
-              <TrafficIcon
+              <Person3Sharp
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
               />
             }
