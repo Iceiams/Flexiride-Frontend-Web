@@ -34,10 +34,8 @@ const RideStatisticsChart = () => {
     try {
       setError(null);
       setLoading(true);
-      const params = {
-        timeFilter,
-        status: statusFilter,
-      };
+      const params = { timeFilter, status: statusFilter };
+
       if (timeFilter === "custom") {
         if (startDate) params.startDate = startDate;
         if (endDate) params.endDate = endDate;
@@ -50,89 +48,78 @@ const RideStatisticsChart = () => {
 
       let data = response.data;
 
-      // Kiểm tra dữ liệu trả về từ API
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        setStatsData([]); // Không có dữ liệu
-        return;
+      // Điều chỉnh dữ liệu hiển thị cho từng timeFilter
+      switch (timeFilter) {
+        case "today":
+          data = [
+            {
+              date: data.date || "N/A",
+              ...data.services,
+            },
+          ];
+          break;
+        case "thisWeek":
+          data = [
+            {
+              dateRange: data.dateRange || "N/A",
+              ...data.services,
+            },
+          ];
+          break;
+        case "thisMonth":
+          data = data.map((item) => ({
+            date: item.date || item.monthYear || "N/A",
+            ...item,
+          }));
+          break;
+        case "thisYear":
+        case "custom":
+          data = data.map((item) => ({
+            date: item.date || item.monthYear || item.year || "N/A",
+            ...item,
+          }));
+          break;
+        default:
+          data = [];
       }
 
-      if (timeFilter === "today") {
-        data = [
-          {
-            date: data.date,
-            "Đặt Xe": data.services["Đặt Xe"] || 0,
-            "Xe Ghép": data.services["Xe Ghép"] || 0,
-            "Thuê Tài Xế": data.services["Thuê Tài Xế"] || 0,
-          },
-        ];
-      } else if (timeFilter === "thisWeek") {
-        data = [
-          {
-            dateRange: data.dateRange,
-            ...data.services,
-          },
-        ];
-      } else if (timeFilter === "thisYear") {
-        const currentYear = new Date().getFullYear();
-        const monthsInYear = Array.from({ length: 12 }, (_, i) => ({
-          tháng: `${(i + 1).toString().padStart(2, "0")}-${currentYear}`,
-          "Thuê Tài Xế": 0,
-          "Đặt Xe": 0,
-          "Xe Ghép": 0,
+      // Nếu là tuần này, chuyển `dateRange` thành một key `date`
+      if (timeFilter === "thisWeek") {
+        data = data.map((item) => ({
+          date: item.dateRange || "N/A", // Sử dụng `dateRange` thay vì `date`
+          ...item,
         }));
-        const transformedData = data.map((item) => {
-          const [_, month, year] = item.tháng.match(/tháng (\d+) năm (\d+)/);
-          return {
-            ...item,
-            tháng: `${month.padStart(2, "0")}-${year}`,
-          };
-        });
-        data = monthsInYear.map((month) => {
-          const existingData = transformedData.find(
-            (d) => d.tháng === month.tháng
-          );
-          return {
-            ...month,
-            "Thuê Tài Xế": existingData?.["Thuê Tài Xế"] || 0,
-            "Đặt Xe": existingData?.["Đặt Xe"] || 0,
-            "Xe Ghép": existingData?.["Xe Ghép"] || 0,
-          };
-        });
       }
 
       setStatsData(data);
     } catch (error) {
       setError(
-        error.response?.data?.message || "Đã xảy ra lỗi không xác định."
+        error.response?.data?.message || "Có lỗi xảy ra khi lấy dữ liệu."
       );
-      setStatsData([]); // Đảm bảo dữ liệu được đặt lại khi gặp lỗi
+      setStatsData([]);
     } finally {
       setLoading(false);
-    }
-  }, [timeFilter, statusFilter, startDate, endDate]);
-  useEffect(() => {
-    if (timeFilter === "custom") {
       setIsCustomApplied(false);
     }
-  }, [startDate, endDate]);
+  }, [timeFilter, statusFilter, startDate, endDate]);
+
+  useEffect(() => {
+    if (timeFilter === "custom" && !isCustomApplied) return; // Không fetch nếu chưa nhấn "Áp dụng"
+    fetchRideStats();
+    if (timeFilter === "custom") {
+      setIsCustomApplied(false); // Reset sau khi fetch thành công
+    }
+  }, [timeFilter, statusFilter, isCustomApplied]);
 
   const handleApplyCustomFilter = () => {
     if (!startDate || !endDate) {
       setError("Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
       return;
     }
+
     setError(null);
-    setIsCustomApplied(false); // Đặt lại trước khi áp dụng
-    setTimeout(() => {
-      setIsCustomApplied(true); // Kích hoạt lại sau khi áp dụng
-    }, 0);
+    setIsCustomApplied(true); // Kích hoạt fetch khi nhấn áp dụng
   };
-
-  useEffect(() => {
-    if (timeFilter === "custom" && !isCustomApplied) return;
-
-    fetchRideStats();
-  }, [timeFilter, statusFilter, isCustomApplied]);
 
   const timeFilters = useMemo(
     () => [
@@ -147,13 +134,11 @@ const RideStatisticsChart = () => {
 
   const statusFilters = useMemo(
     () => [
-      // { value: "all", label: "Tất cả trạng thái" },
       { value: "completed", label: "Hoàn thành" },
       { value: "canceled", label: "Đã hủy" },
     ],
     []
   );
-
   const exportToExcel = async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Thống kê chuyến đi");
@@ -276,10 +261,7 @@ const RideStatisticsChart = () => {
             <InputLabel>Thời gian</InputLabel>
             <Select
               value={timeFilter}
-              onChange={(e) => {
-                setTimeFilter(e.target.value);
-                if (e.target.value !== "custom") setIsCustomApplied(false);
-              }}
+              onChange={(e) => setTimeFilter(e.target.value)}
               label="Thời gian"
             >
               {timeFilters.map((filter) => (
@@ -375,13 +357,7 @@ const RideStatisticsChart = () => {
           <ResponsiveBar
             data={statsData}
             keys={["Thuê Tài Xế", "Đặt Xe", "Xe Ghép"]}
-            indexBy={
-              timeFilter === "today"
-                ? "date"
-                : timeFilter === "thisWeek"
-                ? "dateRange"
-                : "tháng"
-            }
+            indexBy="date"
             margin={{ top: 50, right: 130, bottom: 150, left: 60 }}
             padding={0.3}
             groupMode="grouped"

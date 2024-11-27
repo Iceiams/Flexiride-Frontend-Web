@@ -47,37 +47,24 @@ const RevenueLineChart = () => {
       item.services.forEach((service) => {
         const serviceName = service.serviceName;
 
-        if (!serviceMap[`${serviceName}_System`]) {
-          serviceMap[`${serviceName}_System`] = {
-            id: `${serviceName} (Hệ Thống)`,
+        // Initialize the service if not already present in the map
+        if (!serviceMap[serviceName]) {
+          serviceMap[serviceName] = {
+            id: serviceName,
             color: getRandomColor(),
             data: [],
           };
         }
 
-        if (!serviceMap[`${serviceName}_Driver`]) {
-          serviceMap[`${serviceName}_Driver`] = {
-            id: `${serviceName} (Tài Xế)`,
-            color: getRandomColor(),
-            data: [],
-          };
-        }
-
+        // Parse the system revenue (convert to number for charting)
         const systemRevenue = parseFloat(
           service.systemRevenue.replace(/[^0-9.-]+/g, "")
         );
-        const driverRevenue = parseFloat(
-          service.driverRevenue.replace(/[^0-9.-]+/g, "")
-        );
 
-        serviceMap[`${serviceName}_System`].data.push({
+        // Add the data point
+        serviceMap[serviceName].data.push({
           x: item.date,
           y: systemRevenue,
-        });
-
-        serviceMap[`${serviceName}_Driver`].data.push({
-          x: item.date,
-          y: driverRevenue,
         });
       });
     });
@@ -183,14 +170,30 @@ const RevenueLineChart = () => {
               legend: "Thời Gian",
               legendOffset: 36,
               legendPosition: "middle",
+              legendTextStyle: { fill: "#2196F3" },
             }}
             axisLeft={{
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: "Doanh Thu (VND)",
+              legend: "Doanh Thu Hệ Thống (VND)",
               legendOffset: -40,
               legendPosition: "middle",
+              legendTextStyle: { fill: "#2196F3" },
+            }}
+            theme={{
+              axis: {
+                ticks: {
+                  text: {
+                    fill: "#F4F4F4", // Tick labels color
+                  },
+                },
+                legend: {
+                  text: {
+                    fill: "#F4F4F4", // Legend text color
+                  },
+                },
+              },
             }}
             pointSize={10}
             pointColor={{ theme: "background" }}
