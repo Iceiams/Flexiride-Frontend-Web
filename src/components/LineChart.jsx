@@ -47,7 +47,6 @@ const RevenueLineChart = () => {
       item.services.forEach((service) => {
         const serviceName = service.serviceName;
 
-        // Initialize the service if not already present in the map
         if (!serviceMap[serviceName]) {
           serviceMap[serviceName] = {
             id: serviceName,
@@ -56,17 +55,20 @@ const RevenueLineChart = () => {
           };
         }
 
-        // Parse the system revenue (convert to number for charting)
         const systemRevenue = parseFloat(
           service.systemRevenue.replace(/[^0-9.-]+/g, "")
         );
 
-        // Add the data point
         serviceMap[serviceName].data.push({
           x: item.date,
           y: systemRevenue,
         });
       });
+    });
+
+    // Sort data by date for each service
+    Object.values(serviceMap).forEach((service) => {
+      service.data.sort((a, b) => new Date(a.x) - new Date(b.x));
     });
 
     return Object.values(serviceMap);
@@ -155,7 +157,7 @@ const RevenueLineChart = () => {
           <ResponsiveLine
             data={chartData}
             margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
-            xScale={{ type: "point" }}
+            xScale={{ type: "time", format: "%Y-%m-%d", precision: "day" }}
             yScale={{
               type: "linear",
               min: "auto",
@@ -164,6 +166,8 @@ const RevenueLineChart = () => {
               reverse: false,
             }}
             axisBottom={{
+              format: "%d",
+              tickValues: "every 1 days",
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
