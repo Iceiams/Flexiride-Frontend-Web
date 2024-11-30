@@ -243,20 +243,28 @@ const RideStatisticsChart = () => {
           {timeFilter === "custom" && `Thống Kê Từ ${startDate} Đến ${endDate}`} */}
         </Typography>
         <Box display="flex" gap={2} alignItems="center">
-          <FormControl style={{ minWidth: 150 }}>
-            <InputLabel>Trạng thái</InputLabel>
+          <FormControl style={{ minWidth: 120 }}>
+            <InputLabel style={{ fontSize: "14px", fontWeight: "500" }}>
+              Trạng thái
+            </InputLabel>
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               label="Trạng thái"
+              style={{ fontSize: "14px" }}
             >
               {statusFilters.map((filter) => (
-                <MenuItem key={filter.value} value={filter.value}>
+                <MenuItem
+                  key={filter.value}
+                  value={filter.value}
+                  style={{ fontSize: "14px" }}
+                >
                   {filter.label}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+
           <FormControl style={{ minWidth: 150 }}>
             <InputLabel>Thời gian</InputLabel>
             <Select
@@ -336,7 +344,7 @@ const RideStatisticsChart = () => {
               left: "0", // Căn chỉnh với trục Y
               transform: "translate(20%, 0)", // Dịch sang trái một nửa chiều rộng để căn giữa
               textAlign: "center",
-              fontSize: "14px",
+              fontSize: "15px",
               color: colors.grey[100],
             }}
           >
@@ -348,7 +356,7 @@ const RideStatisticsChart = () => {
               bottom: "140px",
               right: "40px", // Đặt chữ ở bên phải
               textAlign: "center",
-              fontSize: "14px",
+              fontSize: "15px",
               color: colors.grey[100],
             }}
           >
@@ -414,6 +422,19 @@ const RideStatisticsChart = () => {
               tickPadding: 5,
               tickRotation: 0,
               legend: "",
+              renderTick: (tick) => (
+                <text
+                  x={tick.x}
+                  y={tick.y + 30} // Khoảng cách giữa chữ và trục
+                  textAnchor="middle"
+                  style={{
+                    fontSize: "14px", // Kích thước chữ
+                    fill: "white", // Màu chữ
+                  }}
+                >
+                  {tick.value}
+                </text>
+              ),
             }}
             axisLeft={{
               tickSize: 5,

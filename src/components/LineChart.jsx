@@ -17,6 +17,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import * as XLSX from "xlsx";
 import { useTheme } from "@mui/material/styles";
 import { tokens } from "../theme";
+import ExcelJS from "exceljs";
 
 const RevenueLineChart = () => {
   const theme = useTheme();
@@ -116,28 +117,109 @@ const RevenueLineChart = () => {
 
     return Object.values(serviceMap);
   };
+
   const exportToExcel = () => {
     if (!chartData.length) {
       alert("Không có dữ liệu để xuất");
       return;
     }
 
-    const excelData = chartData.flatMap((series) =>
-      series.data.map((point) => ({
-        "Tên Dịch Vụ": series.id,
-        "Thời Gian": point.x,
-        "Doanh Thu": point.y,
-      }))
-    );
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Doanh Thu");
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Doanh Thu");
+    // Thêm tiêu đề chính
+    worksheet.mergeCells("A1:B1"); // Gộp cột
+    const mainTitle = worksheet.getCell("A1");
+    mainTitle.value = "BÁO CÁO DOANH THU HỆ THỐNG";
+    mainTitle.alignment = { horizontal: "center", vertical: "middle" };
+    mainTitle.font = { bold: true, size: 16, color: { argb: "FFFFFFFF" } };
+    mainTitle.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "1F4E78" },
+    };
 
-    XLSX.writeFile(
-      workbook,
-      `Doanh_Thu_${format(new Date(), "yyyy-MM-dd")}.xlsx`
-    );
+    worksheet.addRow([]); // Dòng trống
+
+    let grandTotal = 0;
+
+    // Vòng lặp qua từng dịch vụ
+    chartData.forEach((series) => {
+      const serviceTotal = series.data.reduce((sum, point) => sum + point.y, 0);
+      grandTotal += serviceTotal;
+
+      // Thêm tiêu đề dịch vụ
+      const serviceTitleRow = worksheet.addRow([`Tên Dịch Vụ: ${series.id}`]);
+      serviceTitleRow.font = {
+        bold: true,
+        size: 14,
+        color: { argb: "FFFFFFFF" },
+      };
+      serviceTitleRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "4CAF50" }, // Màu xanh lá
+      };
+
+      // Thêm tiêu đề cột
+      const headerRow = worksheet.addRow(["Thời Gian", "Doanh Thu (VNĐ)"]);
+      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      headerRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "2196F3" }, // Màu xanh dương
+      };
+      headerRow.alignment = { horizontal: "center" };
+
+      // Thêm chi tiết doanh thu
+      series.data.forEach((point) => {
+        worksheet.addRow([format(new Date(point.x), "dd/MM/yyyy"), point.y]);
+      });
+
+      // Thêm tổng doanh thu của dịch vụ
+      const totalRow = worksheet.addRow(["Tổng doanh thu", serviceTotal]);
+      totalRow.font = { bold: true, color: { argb: "FF0000" } }; // Màu đỏ
+      totalRow.alignment = { horizontal: "right" };
+
+      worksheet.addRow([]); // Dòng trống
+    });
+
+    // Thêm tổng doanh thu toàn bộ
+    const grandTotalRow = worksheet.addRow([
+      "Tổng doanh thu toàn bộ",
+      grandTotal,
+    ]);
+    grandTotalRow.font = { bold: true, size: 12, color: { argb: "FF0000" } };
+    grandTotalRow.alignment = { horizontal: "right" };
+
+    // Định dạng cột
+    worksheet.columns = [
+      { width: 30 }, // Cột "Thời Gian" hoặc "Tên Dịch Vụ"
+      { width: 20 }, // Cột "Doanh Thu"
+    ];
+
+    // Xuất file Excel
+    workbook.xlsx.writeBuffer().then((buffer) => {
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `Doanh_Thu_${format(new Date(), "yyyy-MM-dd")}.xlsx`;
+      link.click();
+    });
+  };
+
+  const getTickValuesFromData = () => {
+    const ticks = new Set(); // Sử dụng Set để tránh trùng lặp
+
+    // Lặp qua tất cả các series trong chartData
+    chartData.forEach((series) => {
+      series.data.forEach((point) => {
+        ticks.add(point.x); // Lấy `x` (ngày) từ từng điểm dữ liệu
+      });
+    });
+    return Array.from(ticks).sort((a, b) => new Date(a) - new Date(b)); // Sắp xếp theo thời gian
   };
 
   useEffect(() => {
@@ -249,7 +331,7 @@ const RevenueLineChart = () => {
             variant="body2"
             sx={{
               position: "absolute",
-              top: "1%",
+              top: "2px",
               left: "0",
               transform: 0,
               textAlign: "center",
@@ -263,7 +345,7 @@ const RevenueLineChart = () => {
             variant="h5"
             sx={{
               position: "absolute",
-              top: "4%",
+              top: "5%",
               left: "0",
               textAlign: "center",
               color: colors.greenAccent[400],
@@ -277,7 +359,7 @@ const RevenueLineChart = () => {
             variant="body2"
             sx={{
               position: "absolute",
-              bottom: "60px",
+              bottom: "90px",
               left: "93%",
               transform: "translateX(-50%)",
               textAlign: "center",
@@ -289,19 +371,44 @@ const RevenueLineChart = () => {
           </Typography>
 
           <ResponsiveLine
-            data={chartData.length > 0 ? chartData : []} // Đảm bảo luôn có dữ liệu
-            margin={{ top: 50, right: 110, bottom: 70, left: 60 }}
+            data={chartData.length > 0 ? chartData : []}
+            margin={{ top: 70, right: 110, bottom: 100, left: 60 }}
             xScale={{
               type: "time",
-              format: filterType === "month" ? "%Y-%m" : "%Y-%m-%d",
+              format: "%Y-%m-%d", // Định dạng thời gian chính
               precision: filterType === "month" ? "month" : "day",
+              useUTC: false,
+              nice: true,
             }}
             axisBottom={{
-              format: filterType === "month" ? "%m %Y" : "%d %b",
+              format: (value) => {
+                const date = new Date(value); // Chuyển giá trị x thành ngày
+                if (filterType === "custom") {
+                  const startYear = startDate.getFullYear();
+                  const endYear = endDate.getFullYear();
+                  const startMonth = startDate.getMonth();
+                  const endMonth = endDate.getMonth();
+
+                  if (startYear === endYear) {
+                    if (startMonth === endMonth) {
+                      // Cùng năm, cùng tháng -> Ngày/Tháng
+                      return format(date, "dd/MM");
+                    } else {
+                      // Cùng năm, khác tháng -> Tháng/Năm
+                      return format(date, "MM/yyyy");
+                    }
+                  } else {
+                    // Khác năm -> Chỉ Năm
+                    return format(date, "yyyy");
+                  }
+                } else if (filterType === "month") {
+                  return format(date, "MM/yyyy"); // Tháng/Năm
+                } else {
+                  return format(date, "dd/MM"); // Ngày/Tháng/Năm
+                }
+              },
+              tickValues: getTickValuesFromData(), // Chỉ hiển thị những ngày có data
               tickRotation: -45,
-              // legend: "Thời gian",
-              // legendOffset: 50,
-              // legendPosition: "middle",
             }}
             yScale={{
               type: "linear",
@@ -317,9 +424,9 @@ const RevenueLineChart = () => {
             theme={{
               crosshair: {
                 line: {
-                  stroke: "#FF5722", // Đổi màu đường gióng thành màu cam (hoặc màu bạn muốn)
-                  strokeWidth: 1, // Độ dày của đường gióng
-                  strokeDasharray: "6 6", // Kiểu nét đứt
+                  stroke: "#FF5722",
+                  strokeWidth: 0.7,
+                  strokeDasharray: "6 6",
                 },
               },
               grid: {
@@ -340,7 +447,14 @@ const RevenueLineChart = () => {
                   },
                   text: {
                     fill: "#F4F4F4",
+                    fontSize: 13,
                   },
+                },
+              },
+
+              legends: {
+                text: {
+                  fontSize: 13, // Tăng kích thước chữ trong legend
                 },
               },
             }}
@@ -353,18 +467,18 @@ const RevenueLineChart = () => {
             useMesh={true}
             legends={[
               {
-                anchor: "bottom", // Vị trí của chú thích
-                direction: "row", // Sắp xếp theo hàng ngang
+                anchor: "bottom",
+                direction: "row",
                 justify: false,
                 translateX: 0,
-                translateY: 70, // Khoảng cách từ biểu đồ đến chú thích
-                itemsSpacing: 10, // Khoảng cách giữa các mục
+                translateY: 100,
+                itemsSpacing: 10,
                 itemDirection: "left-to-right",
                 itemWidth: 120,
                 itemHeight: 20,
                 itemTextColor: "#EDEDED",
-                symbolSize: 15, // Kích thước biểu tượng
-                symbolShape: "circle", // Hình dạng biểu tượng
+                symbolSize: 15,
+                symbolShape: "circle",
                 effects: [
                   {
                     on: "hover",
@@ -376,8 +490,33 @@ const RevenueLineChart = () => {
               },
             ]}
             tooltip={({ point }) => {
-              // Dữ liệu từ `point`
               const { serieId, data } = point;
+
+              let dateFormat = "dd/MM/yyyy"; // Mặc định
+
+              if (filterType === "custom") {
+                const startYear = startDate.getFullYear();
+                const endYear = endDate.getFullYear();
+                const startMonth = startDate.getMonth();
+                const endMonth = endDate.getMonth();
+
+                if (startYear === endYear) {
+                  if (startMonth === endMonth) {
+                    // Cùng năm, cùng tháng -> Ngày/Tháng
+                    dateFormat = "dd/MM";
+                  } else {
+                    // Cùng năm, khác tháng -> Tháng/Năm
+                    dateFormat = "MM/yyyy";
+                  }
+                } else {
+                  // Khác năm -> Chỉ Năm
+                  dateFormat = "yyyy";
+                }
+              } else if (filterType === "month") {
+                dateFormat = "MM/yyyy"; // Tháng/Năm
+              }
+
+              const formattedDate = format(new Date(data.x), dateFormat);
 
               const formattedRevenue = new Intl.NumberFormat("vi-VN", {
                 style: "currency",
@@ -397,7 +536,7 @@ const RevenueLineChart = () => {
                 >
                   <strong>{serieId}</strong>
                   <br />
-                  Thời gian: {format(new Date(data.x), "dd/MM/yyyy")}
+                  Thời gian: {formattedDate}
                   <br />
                   Doanh thu: {formattedRevenue}
                 </div>
