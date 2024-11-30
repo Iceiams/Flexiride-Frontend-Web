@@ -12,7 +12,6 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 const ListLockedUsers = () => {
   const theme = useTheme();

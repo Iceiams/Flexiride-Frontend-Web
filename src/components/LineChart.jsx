@@ -1,19 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ResponsiveLine } from "@nivo/line";
 import axios from "axios";
-import ReactDatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
+import {
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Box,
+  TextField,
+} from "@mui/material";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import SearchIcon from "@mui/icons-material/Search";
+import * as XLSX from "xlsx";
+import { useTheme } from "@mui/material/styles";
+import { tokens } from "../theme";
 
 const RevenueLineChart = () => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
   const [filterType, setFilterType] = useState("month");
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const [startDate, setStartDate] = useState(
+    new Date(new Date().setMonth(new Date().getMonth() - 6))
+  ); // 6 tháng trước
+  const [endDate, setEndDate] = useState(new Date()); // Hôm nay
   const [chartData, setChartData] = useState([]);
+  const [totalSystemRevenue, setTotalSystemRevenue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [chartUnit, setChartUnit] = useState("Ngàn VNĐ");
 
-  // Fetch revenue data
   const fetchRevenueData = async () => {
     setLoading(true);
     setError(null);
@@ -21,226 +40,377 @@ const RevenueLineChart = () => {
     try {
       const params = new URLSearchParams();
       params.append("filterType", filterType);
-      if (startDate)
-        params.append("startDate", format(startDate, "yyyy-MM-dd"));
-      if (endDate) params.append("endDate", format(endDate, "yyyy-MM-dd"));
+      params.append("startDate", format(startDate, "yyyy-MM-dd"));
+      params.append("endDate", format(endDate, "yyyy-MM-dd"));
 
       const response = await axios.get(
         `http://localhost:3000/admin/revenueLineStatistic?${params.toString()}`
       );
 
-      const processedData = processChartData(response.data.data);
+      if (
+        !response.data ||
+        !response.data.data ||
+        response.data.data.length === 0
+      ) {
+        setChartData([]);
+        setTotalSystemRevenue(0);
+        setLoading(false);
+        return;
+      }
+
+      const sortedData = response.data.data.sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      );
+
+      const processedData = processChartData(sortedData);
       setChartData(processedData);
+      setTotalSystemRevenue(response.data.totalSystemRevenue || 0);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching revenue data:", err);
       setError(err);
+      setChartData([]);
+      setTotalSystemRevenue(0);
       setLoading(false);
     }
   };
 
-  // Process chart data
   const processChartData = (data) => {
+    if (!data || data.length === 0) {
+      return [];
+    }
+
     const serviceMap = {};
 
-    data.forEach((item) => {
-      item.services.forEach((service) => {
-        const serviceName = service.serviceName;
+    try {
+      data.forEach((item) => {
+        if (item.services && Array.isArray(item.services)) {
+          item.services.forEach((service) => {
+            if (!service || !service.serviceName) return;
 
-        if (!serviceMap[serviceName]) {
-          serviceMap[serviceName] = {
-            id: serviceName,
-            color: getRandomColor(),
-            data: [],
-          };
+            const serviceName = service.serviceName;
+
+            if (!serviceMap[serviceName]) {
+              serviceMap[serviceName] = {
+                id: serviceName,
+                data: [],
+              };
+            }
+
+            if (
+              item.date &&
+              service.systemRevenue !== undefined &&
+              service.systemRevenue !== null
+            ) {
+              serviceMap[serviceName].data.push({
+                x: new Date(item.date),
+                y: Number(service.systemRevenue) || 0,
+              });
+            }
+          });
         }
-
-        const systemRevenue = parseFloat(
-          service.systemRevenue.replace(/[^0-9.-]+/g, "")
-        );
-
-        serviceMap[serviceName].data.push({
-          x: item.date,
-          y: systemRevenue,
-        });
       });
-    });
-
-    // Sort data by date for each service
-    Object.values(serviceMap).forEach((service) => {
-      service.data.sort((a, b) => new Date(a.x) - new Date(b.x));
-    });
+    } catch (error) {
+      console.error("Error processing chart data:", error);
+      return [];
+    }
 
     return Object.values(serviceMap);
   };
-
-  // Generate random colors
-  const getRandomColor = () => {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
+  const exportToExcel = () => {
+    if (!chartData.length) {
+      alert("Không có dữ liệu để xuất");
+      return;
     }
-    return color;
+
+    const excelData = chartData.flatMap((series) =>
+      series.data.map((point) => ({
+        "Tên Dịch Vụ": series.id,
+        "Thời Gian": point.x,
+        "Doanh Thu": point.y,
+      }))
+    );
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Doanh Thu");
+
+    XLSX.writeFile(
+      workbook,
+      `Doanh_Thu_${format(new Date(), "yyyy-MM-dd")}.xlsx`
+    );
   };
 
+  useEffect(() => {
+    fetchRevenueData();
+  }, [filterType, startDate, endDate]);
+
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "1rem" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>
-        Thống Kê Doanh Thu
-      </h1>
+    <Box sx={{ maxWidth: 900, margin: "0 auto", padding: "16px" }}>
+      {/* Bộ lọc */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={4}
+      >
+        <FormControl style={{ minWidth: 150 }}>
+          <InputLabel>Loại thời gian</InputLabel>
+          <Select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            label="Loại thời gian"
+          >
+            <MenuItem value="day">Ngày</MenuItem>
+            <MenuItem value="month">Tháng</MenuItem>
+            <MenuItem value="custom">Tùy chỉnh</MenuItem>
+          </Select>
+        </FormControl>
+        {filterType === "custom" && (
+          <Box display="flex" gap={2} alignItems="center">
+            <TextField
+              type="date"
+              label="Ngày bắt đầu"
+              value={format(startDate, "yyyy-MM-dd")}
+              onChange={(e) => setStartDate(new Date(e.target.value))}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              type="date"
+              label="Ngày kết thúc"
+              value={format(endDate, "yyyy-MM-dd")}
+              onChange={(e) => setEndDate(new Date(e.target.value))}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+        )}
+        <Box>
+          <Button
+            variant="contained"
+            onClick={fetchRevenueData}
+            startIcon={<SearchIcon />}
+            sx={{
+              backgroundColor: "#4CAF50",
+              color: "#fff",
+              "&:hover": {
+                backgroundColor: "#388E3C",
+              },
+              minWidth: 130,
+            }}
+          >
+            Tra cứu
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={exportToExcel}
+            startIcon={<FileDownloadIcon />}
+            disabled={chartData.length === 0}
+            sx={{
+              color: "#4CAF50",
+              borderColor: "#4CAF50",
+              "&:hover": {
+                borderColor: "#388E3C",
+                backgroundColor: "#E8F5E9",
+              },
+              minWidth: 130,
+            }}
+          >
+            Xuất Excel
+          </Button>
+        </Box>
+      </Box>
 
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-        {/* Filter type */}
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          style={{
-            padding: "0.5rem",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
+      <Box sx={{ textAlign: "center", marginBottom: 2 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: colors.grey[100],
+            fontSize: "14px",
+            fontStyle: "italic",
           }}
-        >
-          <option value="day">Ngày</option>
-          <option value="month">Tháng</option>
-        </select>
+        ></Typography>
+      </Box>
+      {/* Hiển thị loading hoặc lỗi */}
+      {loading && (
+        <Typography variant="body1" color="textSecondary" align="center">
+          Đang tải dữ liệu...
+        </Typography>
+      )}
+      {error && (
+        <Typography variant="body1" color="error" align="center">
+          Lỗi: {error.message}
+        </Typography>
+      )}
 
-        {/* Start date */}
-        <ReactDatePicker
-          selected={startDate}
-          onChange={(date) => setStartDate(date)}
-          placeholderText="Ngày bắt đầu"
-          dateFormat="yyyy-MM-dd"
-          style={{
-            padding: "0.5rem",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-          }}
-        />
+      {/* Phần render biểu đồ còn lại */}
+      {!loading && !error && chartData.length > 0 ? (
+        <Box sx={{ height: 550, position: "relative" }}>
+          {/* Y-Axis Label */}
+          <Typography
+            variant="body2"
+            sx={{
+              position: "absolute",
+              top: "1%",
+              left: "0",
+              transform: 0,
+              textAlign: "center",
+              color: colors.grey[100],
+              fontSize: "14px",
+            }}
+          >
+            Doanh Thu Hệ Thống ({chartUnit})
+          </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              position: "absolute",
+              top: "4%",
+              left: "0",
+              textAlign: "center",
+              color: colors.greenAccent[400],
+              fontSize: "16px",
+            }}
+          >
+            Tổng: {totalSystemRevenue}
+          </Typography>
+          {/* X-Axis Label */}
+          <Typography
+            variant="body2"
+            sx={{
+              position: "absolute",
+              bottom: "60px",
+              left: "93%",
+              transform: "translateX(-50%)",
+              textAlign: "center",
+              color: colors.grey[100],
+              fontSize: "14px",
+            }}
+          >
+            Thời gian
+          </Typography>
 
-        {/* End date */}
-        <ReactDatePicker
-          selected={endDate}
-          onChange={(date) => setEndDate(date)}
-          placeholderText="Ngày kết thúc"
-          dateFormat="yyyy-MM-dd"
-          style={{
-            padding: "0.5rem",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-          }}
-        />
-
-        {/* Search button */}
-        <button
-          onClick={fetchRevenueData}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#007BFF",
-            color: "#fff",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Tra cứu
-        </button>
-      </div>
-
-      {/* Loading/Error */}
-      {loading && <p>Đang tải dữ liệu...</p>}
-      {error && <p style={{ color: "red" }}>Lỗi: {error.message}</p>}
-
-      {/* Chart */}
-      {!loading && !error && chartData.length > 0 && (
-        <div style={{ height: "500px" }}>
           <ResponsiveLine
-            data={chartData}
-            margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
-            xScale={{ type: "time", format: "%Y-%m-%d", precision: "day" }}
+            data={chartData.length > 0 ? chartData : []} // Đảm bảo luôn có dữ liệu
+            margin={{ top: 50, right: 110, bottom: 70, left: 60 }}
+            xScale={{
+              type: "time",
+              format: filterType === "month" ? "%Y-%m" : "%Y-%m-%d",
+              precision: filterType === "month" ? "month" : "day",
+            }}
+            axisBottom={{
+              format: filterType === "month" ? "%m %Y" : "%d %b",
+              tickRotation: -45,
+              // legend: "Thời gian",
+              // legendOffset: 50,
+              // legendPosition: "middle",
+            }}
             yScale={{
               type: "linear",
               min: "auto",
               max: "auto",
-              stacked: false,
-              reverse: false,
-            }}
-            axisBottom={{
-              format: "%d",
-              tickValues: "every 1 days",
-              tickSize: 5,
-              tickPadding: 5,
-              tickRotation: 0,
-              legend: "Thời Gian",
-              legendOffset: 36,
-              legendPosition: "middle",
-              legendTextStyle: { fill: "#2196F3" },
             }}
             axisLeft={{
-              tickSize: 5,
-              tickPadding: 5,
-              tickRotation: 0,
-              legend: "Doanh Thu Hệ Thống (VND)",
-              legendOffset: -40,
-              legendPosition: "middle",
-              legendTextStyle: { fill: "#2196F3" },
+              format: (value) =>
+                chartUnit === "Triệu VNĐ"
+                  ? `${(value / 1000000).toFixed(1)}`
+                  : `${(value / 1000).toFixed(0)}`,
             }}
             theme={{
+              crosshair: {
+                line: {
+                  stroke: "#FF5722", // Đổi màu đường gióng thành màu cam (hoặc màu bạn muốn)
+                  strokeWidth: 1, // Độ dày của đường gióng
+                  strokeDasharray: "6 6", // Kiểu nét đứt
+                },
+              },
+              grid: {
+                line: {
+                  stroke: "#FFFFFF",
+                  strokeDasharray: "4 4",
+                },
+              },
               axis: {
-                ticks: {
-                  text: {
-                    fill: "#F4F4F4", // Tick labels color
+                domain: {
+                  line: {
+                    stroke: "#FFFFFF",
                   },
                 },
-                legend: {
+                ticks: {
+                  line: {
+                    stroke: "#FFFFFF",
+                  },
                   text: {
-                    fill: "#F4F4F4", // Legend text color
+                    fill: "#F4F4F4",
                   },
                 },
               },
             }}
             pointSize={10}
-            pointColor={{ theme: "background" }}
             pointBorderWidth={2}
             pointBorderColor={{ from: "serieColor" }}
+            pointColor={{ theme: "background" }}
+            enableGridX={false}
+            enableGridY={true}
             useMesh={true}
             legends={[
               {
-                anchor: "bottom-right",
-                direction: "column",
+                anchor: "bottom", // Vị trí của chú thích
+                direction: "row", // Sắp xếp theo hàng ngang
                 justify: false,
-                translateX: 100,
-                translateY: 0,
-                itemsSpacing: 0,
+                translateX: 0,
+                translateY: 70, // Khoảng cách từ biểu đồ đến chú thích
+                itemsSpacing: 10, // Khoảng cách giữa các mục
                 itemDirection: "left-to-right",
-                itemWidth: 80,
+                itemWidth: 120,
                 itemHeight: 20,
-                itemOpacity: 0.75,
-                symbolSize: 12,
-                symbolShape: "circle",
-                symbolBorderColor: "rgba(0, 0, 0, .5)",
+                itemTextColor: "#EDEDED",
+                symbolSize: 15, // Kích thước biểu tượng
+                symbolShape: "circle", // Hình dạng biểu tượng
                 effects: [
                   {
                     on: "hover",
                     style: {
-                      itemBackground: "rgba(0, 0, 0, .03)",
-                      itemOpacity: 1,
+                      itemTextColor: "#FFFFFF",
                     },
                   },
                 ],
               },
             ]}
-          />
-        </div>
-      )}
+            tooltip={({ point }) => {
+              // Dữ liệu từ `point`
+              const { serieId, data } = point;
 
-      {/* No data */}
-      {!loading && !error && chartData.length === 0 && (
-        <p style={{ textAlign: "center", color: "gray" }}>
-          Không có dữ liệu để hiển thị
-        </p>
+              const formattedRevenue = new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: "VND",
+                minimumFractionDigits: 0,
+              }).format(data.y);
+
+              return (
+                <div
+                  style={{
+                    background: "#333",
+                    color: "#fff",
+                    padding: "10px",
+                    borderRadius: "5px",
+                    boxShadow: "0 3px 6px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <strong>{serieId}</strong>
+                  <br />
+                  Thời gian: {format(new Date(data.x), "dd/MM/yyyy")}
+                  <br />
+                  Doanh thu: {formattedRevenue}
+                </div>
+              );
+            }}
+          />
+        </Box>
+      ) : (
+        <Typography variant="body1" color="textSecondary" align="center">
+          Không có dữ liệu cho khoảng thời gian được chọn
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 

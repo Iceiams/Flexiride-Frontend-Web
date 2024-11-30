@@ -1,16 +1,12 @@
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../theme";
-import { mockTransactions } from "../../data/mockData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import CheckCircleIcon from "@mui/icons-material/ElectricBikeOutlined";
 import Person3Sharp from "@mui/icons-material/Person3Sharp";
 import CarRentalOutlined from "@mui/icons-material/CarRentalOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAddAlt1Outlined";
-import TrafficIcon from "@mui/icons-material/Traffic";
 import Header from "../../components/Header";
 import LineChart from "../../components/LineChart";
-import GeographyChart from "../../components/GeographyChart";
-import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
 import { useAuth } from "../../AuthContext";
@@ -244,7 +240,7 @@ const Dashboard = () => {
             </Box>
           </Box>
           <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
+            {/* <LineChart isDashboard={true} /> */}
           </Box>
         </Box>
         <Box
@@ -265,7 +261,7 @@ const Dashboard = () => {
               Recent Transactions
             </Typography>
           </Box>
-          {mockTransactions.map((transaction, i) => (
+          {/* {mockTransactions.map((transaction, i) => (
             <Box
               key={`${transaction.txId}-${i}`}
               display="flex"
@@ -295,7 +291,7 @@ const Dashboard = () => {
                 ${transaction.cost}
               </Box>
             </Box>
-          ))}
+          ))} */}
         </Box>
 
         {/* ROW 3 */}
@@ -354,9 +350,6 @@ const Dashboard = () => {
           >
             Geography Based Traffic
           </Typography>
-          <Box height="200px">
-            <GeographyChart isDashboard={true} />
-          </Box>
         </Box>
       </Box>
     </Box>

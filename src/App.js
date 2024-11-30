@@ -1,25 +1,20 @@
 import { useState } from "react";
 import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
-import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
-import ListUsers from "./scenes/listUser";
+import ListUsers from "./scenes/listUserScreen";
 import ListLockedUsers from "./scenes/lockAccountUsers";
-import PendingDrivers from "./scenes/pendingDrivers";
-import DriverReviews from "./scenes/listFeedback";
-import Bar from "./scenes/bar";
-import PriceService from "./scenes/priceService";
-import Line from "./scenes/line";
-import Pie from "./scenes/pie";
-import FAQ from "./scenes/faq";
-import Geography from "./scenes/geography";
+import PendingDrivers from "./scenes/pendingDriversListScreen";
+import DriverReviews from "./scenes/listFeedbackScreen";
+import Bar from "./scenes/rideStatisticScreen";
+import PriceService from "./scenes/servicePriceManagementScreen";
+import Line from "./scenes/revenueStatisticScreen";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
-import Calendar from "./scenes/calendar/calendar";
-import LoginPage from "./scenes/loginPage";
+import LoginPage from "./scenes/loginPageScreen";
 import { AuthProvider, useAuth } from "./AuthContext"; // Import AuthProvider và useAuth
 import TopbarGlobal from "./scenes/global/TopbarGlobal";
-import VoucherList from "./scenes/voucher";
+import VoucherList from "./scenes/discountManagementScreen";
 import "leaflet/dist/leaflet.css";
 
 function AppContent() {
@@ -95,11 +90,7 @@ function AppContent() {
                     <Route path="/voucher" element={<VoucherList />} />
                     <Route path="/priceService" element={<PriceService />} />
                     <Route path="/bar" element={<Bar />} />
-                    <Route path="/pie" element={<Pie />} />
                     <Route path="/line" element={<Line />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/geography" element={<Geography />} />
                     <Route path="*" element={<Navigate to="/dashboard" />} />
                   </>
                 ) : (

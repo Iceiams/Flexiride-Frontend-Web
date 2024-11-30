@@ -64,6 +64,9 @@ const Sidebar = () => {
         "& .pro-menu-item.active": {
           color: "#6870fa !important",
         },
+        "& .pro-menu": {
+          paddingBottom: "150px !important", // Increased bottom padding significantly
+        },
       }}
     >
       <ProSidebar collapsed={isCollapsed}>
@@ -167,31 +170,10 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
 
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Pages
-            </Typography>
             <Item
               title="Quản lý giá dịch vụ"
               to="/priceService"
               icon={<PriceChange />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Lịch Trình"
-              to="/calendar"
-              icon={<CalendarTodayOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="FAQ Page"
-              to="/faq"
-              icon={<HelpOutlineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -210,13 +192,13 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            <Item
+            {/* <Item
               title="Trạng Thái Chuyến Đi"
               to="/pie"
               icon={<PieChartOutlineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
-            />
+            /> */}
             <Item
               title="Chương trình Voucher"
               to="/voucher"
@@ -225,16 +207,9 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="Thông kê doanh thu"
+              title="Thống kê doanh thu"
               to="/line"
               icon={<TimelineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Geography Chart"
-              to="/geography"
-              icon={<MapOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
