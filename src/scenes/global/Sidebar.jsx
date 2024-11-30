@@ -12,13 +12,10 @@ import { LockOpen } from "@mui/icons-material";
 import { ReviewsOutlined } from "@mui/icons-material";
 import PriceChange from "@mui/icons-material/PriceChange";
 import DiscountOutlined from "@mui/icons-material/DiscountOutlined";
-import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
-import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import RequestPageSharp from "@mui/icons-material/RequestPageSharp";
 import { useAuth } from "../../AuthContext";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
@@ -151,6 +148,13 @@ const Sidebar = () => {
               title="Hồ sơ đợi duyệt"
               to="/pendingDrivers"
               icon={<ContactsOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Xử lý yêu cầu rút tiền"
+              to="/pendingWithdrawRequests"
+              icon={<RequestPageSharp />}
               selected={selected}
               setSelected={setSelected}
             />

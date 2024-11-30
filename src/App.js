@@ -15,6 +15,7 @@ import LoginPage from "./scenes/loginPageScreen";
 import { AuthProvider, useAuth } from "./AuthContext"; // Import AuthProvider và useAuth
 import TopbarGlobal from "./scenes/global/TopbarGlobal";
 import VoucherList from "./scenes/discountManagementScreen";
+import PendingWithdrawRequests from "./scenes/pendingWithdrawRequestsScreen";
 import "leaflet/dist/leaflet.css";
 
 function AppContent() {
@@ -63,6 +64,15 @@ function AppContent() {
                       path="/pendingDrivers"
                       element={
                         <PendingDrivers
+                          searchQuery={searchQuery}
+                          searchResults={searchResults}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/pendingWithdrawRequests"
+                      element={
+                        <PendingWithdrawRequests
                           searchQuery={searchQuery}
                           searchResults={searchResults}
                         />
