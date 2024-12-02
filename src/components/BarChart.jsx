@@ -73,6 +73,23 @@ const RideStatisticsChart = () => {
           }));
           break;
         case "thisYear":
+          data = data
+            .map((item) => ({
+              date: item.date || item.monthYear || item.year || "N/A",
+              ...item,
+            }))
+            .sort((a, b) => {
+              // Trích xuất số tháng từ key monthYear hoặc sử dụng index nếu không có
+              const getMonth = (item) => {
+                if (item.monthYear) {
+                  return parseInt(item.monthYear.split("-")[0]);
+                }
+                return 0;
+              };
+
+              return getMonth(a) - getMonth(b);
+            });
+          break;
         case "custom":
           data = data.map((item) => ({
             date: item.date || item.monthYear || item.year || "N/A",

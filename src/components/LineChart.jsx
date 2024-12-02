@@ -10,6 +10,8 @@ import {
   FormControl,
   InputLabel,
   Box,
+  Snackbar,
+  Alert,
   TextField,
 } from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -34,7 +36,38 @@ const RevenueLineChart = () => {
   const [error, setError] = useState(null);
   const [chartUnit, setChartUnit] = useState("Ngàn VNĐ");
 
+  const [validationError, setValidationError] = useState(null);
+
+  const validateDateRange = () => {
+    // Check if custom filter type is selected
+    if (filterType === "custom") {
+      // Check if start or end date is empty
+      if (!startDate || !endDate) {
+        setValidationError(
+          "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc."
+        );
+        return false;
+      }
+
+      // Check if start date is after end date
+      if (new Date(startDate) > new Date(endDate)) {
+        setValidationError(
+          "Phạm vi ngày tùy chỉnh không hợp lệ. Ngày bắt đầu phải trước ngày kết thúc."
+        );
+        return false;
+      }
+    }
+
+    // Clear any previous validation errors
+    setValidationError(null);
+    return true;
+  };
+
   const fetchRevenueData = async () => {
+    if (!validateDateRange()) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -66,6 +99,19 @@ const RevenueLineChart = () => {
       const processedData = processChartData(sortedData);
       setChartData(processedData);
       setTotalSystemRevenue(response.data.totalSystemRevenue || 0);
+
+      // Tính toán giá trị lớn nhất trong dữ liệu và cập nhật chartUnit
+      const allRevenueValues = processedData.flatMap((service) =>
+        service.data.map((point) => point.y)
+      );
+      const maxRevenueValue = Math.max(...allRevenueValues);
+
+      if (maxRevenueValue >= 1000000) {
+        setChartUnit("Triệu VNĐ");
+      } else {
+        setChartUnit("Ngàn VNĐ");
+      }
+
       setLoading(false);
     } catch (err) {
       setError(err);
@@ -300,7 +346,20 @@ const RevenueLineChart = () => {
           </Button>
         </Box>
       </Box>
-
+      <Snackbar
+        open={!!validationError}
+        autoHideDuration={6000}
+        onClose={() => setValidationError(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setValidationError(null)}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          {validationError}
+        </Alert>
+      </Snackbar>
       <Box sx={{ textAlign: "center", marginBottom: 2 }}>
         <Typography
           variant="body2"
@@ -418,7 +477,7 @@ const RevenueLineChart = () => {
             axisLeft={{
               format: (value) =>
                 chartUnit === "Triệu VNĐ"
-                  ? `${(value / 1000000).toFixed(1)}`
+                  ? `${(value / 1000).toFixed(0)} `
                   : `${(value / 1000).toFixed(0)}`,
             }}
             theme={{
