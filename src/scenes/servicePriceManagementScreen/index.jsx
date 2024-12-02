@@ -18,14 +18,103 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const formatVietnamNumber = (value) => {
+  if (value === null || value === undefined) return "";
+
+  if (value.toString().includes(".")) {
+    return parseFloat(value).toFixed(2).replace(".", ",");
+  }
+
+  return new Intl.NumberFormat("vi-VN").format(value);
+};
+
+const parseVietnamNumber = (value) => {
+  if (!value) return "";
+
+  if (typeof value !== "string") {
+    value = String(value);
+  }
+
+  // Xử lý trường hợp có dấu phẩy và dấu chấm
+  // Thay dấu phẩy thành dấu chấm nếu có
+  value = value.replace(",", ".");
+
+  // Loại bỏ tất cả dấu chấm không phải dấu phân cách thập phân (dấu phân cách nghìn)
+  value = value.replace(/\.(?=\d{3}\b)/g, "");
+
+  // Chuyển đổi giá trị thành số thực
+  const parsedValue = parseFloat(value);
+  return isNaN(parsedValue) ? "" : parsedValue;
+};
+
 const getServiceSchema = (attributes) => {
   const schemaObject = {};
 
   attributes.forEach((attr) => {
-    schemaObject[attr] = yup
-      .number()
-      .required(`${attr} là bắt buộc`)
-      .min(0, `${attr} phải là số dương`);
+    // Lấy tên dễ hiểu từ priceLabels nếu có, nếu không thì dùng tên thuộc tính
+    const fieldLabel =
+      priceLabels[attr] || attr.replace(/_/g, " ").toUpperCase();
+
+    // Custom validator that handles Vietnamese number formatting
+    const vietnamNumberValidator = yup
+      .string()
+      .test(
+        "is-valid-number",
+        `${fieldLabel} phải là số hợp lệ`,
+        function (value) {
+          // Nếu trường là rỗng hoặc null thì bỏ qua
+          if (!value) return true;
+
+          // Thử parse giá trị
+          const parsedValue = parseVietnamNumber(value);
+
+          // Nếu không parse được thành số
+          if (parsedValue === "") {
+            return this.createError({
+              message: `${fieldLabel} phải là số hợp lệ`,
+            });
+          }
+
+          // Kiểm tra cho multipliers
+          if (attr.includes("multiplier")) {
+            if (parsedValue < 0) {
+              return this.createError({
+                message: `${fieldLabel} phải lớn hơn hoặc bằng 0`,
+              });
+            }
+            if (parsedValue > 10) {
+              return this.createError({
+                message: `${fieldLabel} không được vượt quá 10`,
+              });
+            }
+
+            // Kiểm tra số chữ số thập phân
+            const decimalPart = parsedValue.toString().split(".")[1];
+            if (decimalPart && decimalPart.length > 2) {
+              return this.createError({
+                message: `${fieldLabel} phải có tối đa 2 chữ số thập phân`,
+              });
+            }
+          } else {
+            // Kiểm tra cho giá
+            if (parsedValue < 0) {
+              return this.createError({
+                message: `${fieldLabel} phải là số dương`,
+              });
+            }
+            if (parsedValue.toString().replace(".", "").length > 15) {
+              return this.createError({
+                message: `${fieldLabel} không được vượt quá 15 chữ số`,
+              });
+            }
+          }
+
+          return true;
+        }
+      )
+      .required(`${fieldLabel} là bắt buộc`);
+
+    schemaObject[attr] = vietnamNumberValidator;
   });
 
   return yup.object(schemaObject);
@@ -44,10 +133,8 @@ const priceLabels = {
   advance_booking_fee: "Phí đặt trước",
   bad_weather_multiplier: "Hệ số thời tiết xấu",
   day_fee: "Phí ngày",
-  car_basic_fee: "Phí cơ bản cho xe ô tô",
-  car_base_fare_first_10km: "Giá cơ bản (10km đầu) cho xe ô tô",
-  car_fare_per_km_after_10km: "Giá mỗi km (sau 10km) cho xe ô tô",
-  base_fare_first_2km: "Giá cơ bản (2km đầu)",
+  base_fare_first_10km: "Phí 10 km đầu",
+  fare_per_km_after_10km: "Phí cộng thêm sau 10km",
 };
 
 const PriceForm = () => {
@@ -55,6 +142,9 @@ const PriceForm = () => {
   const [serviceOptions, setServiceOptions] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
+  const [originalPricingAttributes, setOriginalPricingAttributes] = useState(
+    {}
+  );
 
   useEffect(() => {
     axios
@@ -64,6 +154,7 @@ const PriceForm = () => {
         if (response.data.length > 0) {
           const firstService = response.data[0];
           setSelectedService(firstService);
+          setOriginalPricingAttributes(firstService.pricingAttributes); // Lưu giá trị ban đầu
           setValidationSchema(
             getServiceSchema(Object.keys(firstService.pricingAttributes))
           );
@@ -74,9 +165,14 @@ const PriceForm = () => {
 
   const getInitialValues = (service) => {
     if (!service) return {};
-    return {
-      ...service.pricingAttributes,
-    };
+
+    // Convert numeric values to formatted Vietnamese style
+    const formattedValues = {};
+    Object.entries(service.pricingAttributes).forEach(([key, value]) => {
+      formattedValues[key] = formatVietnamNumber(value);
+    });
+
+    return formattedValues;
   };
 
   const handleServiceChange = (serviceName, setFieldValue) => {
@@ -90,9 +186,9 @@ const PriceForm = () => {
         getServiceSchema(Object.keys(service.pricingAttributes))
       );
 
-      // Reset form với các giá trị của service mới
-      Object.keys(service.pricingAttributes).forEach((key) => {
-        setFieldValue(key, service.pricingAttributes[key]);
+      // Reset form với các giá trị của service mới, formatted
+      Object.entries(service.pricingAttributes).forEach(([key, value]) => {
+        setFieldValue(key, formatVietnamNumber(value));
       });
     }
   };
@@ -100,13 +196,25 @@ const PriceForm = () => {
   const handleFormSubmit = async (values, { setFieldValue }) => {
     if (!selectedService) return;
 
+    // Kiểm tra xem các giá trị có thay đổi so với giá trị ban đầu không
+    const hasChanges = Object.keys(values).some(
+      (key) =>
+        parseVietnamNumber(values[key]) !==
+        parseVietnamNumber(originalPricingAttributes[key]) // Kiểm tra sự thay đổi so với giá trị ban đầu
+    );
+
+    if (!hasChanges) {
+      toast.info("Không có thay đổi nào để cập nhật");
+      return; // Nếu không có thay đổi, không gửi request
+    }
+
     try {
       const serviceId = selectedService.service_option_id._id;
 
-      // Chỉ gửi các trường có trong pricingAttributes của service hiện tại
+      // Parse formatted values back to numeric
       const updatedPricingAttributes = {};
-      Object.keys(selectedService.pricingAttributes).forEach((key) => {
-        updatedPricingAttributes[key] = values[key];
+      Object.keys(values).forEach((key) => {
+        updatedPricingAttributes[key] = parseVietnamNumber(values[key]);
       });
 
       const response = await axios.put(
@@ -125,28 +233,16 @@ const PriceForm = () => {
 
         toast.success("Cập nhật thành công!");
 
-        // Cập nhật form với dữ liệu mới
+        // Cập nhật form với dữ liệu mới, formatted
         const newPricingAttributes = response.data.data.pricingAttributes;
-        Object.keys(newPricingAttributes).forEach((key) => {
-          setFieldValue(key, newPricingAttributes[key]);
+        Object.entries(newPricingAttributes).forEach(([key, value]) => {
+          setFieldValue(key, formatVietnamNumber(value)); // Định dạng lại giá trị trước khi hiển thị
         });
+        setOriginalPricingAttributes(newPricingAttributes); // Lưu lại giá trị mới để kiểm tra sự thay đổi sau
       }
     } catch (err) {
       console.error("Failed to update service price:", err);
       toast.error("Cập nhật thất bại!");
-    }
-  };
-
-  const handleDelete = async (serviceId) => {
-    try {
-      await axios.delete(`http://localhost:3000/admin/price/${serviceId}`);
-      setServiceOptions((prevOptions) =>
-        prevOptions.filter((option) => option._id !== serviceId)
-      );
-      toast.success("Dịch vụ đã được xóa thành công!");
-    } catch (error) {
-      console.error("Error deleting service:", error);
-      toast.error("Xóa dịch vụ thất bại!");
     }
   };
 
@@ -211,13 +307,43 @@ const PriceForm = () => {
                     key={field}
                     fullWidth
                     variant="filled"
-                    type="number"
+                    type="text" // Changed to text to support custom formatting
                     label={
                       priceLabels[field] ||
                       field.replace(/_/g, " ").toUpperCase()
                     }
-                    onBlur={handleBlur}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      // Ensure e.target.value is a string
+                      let value = e.target.value;
+
+                      // Convert to string if necessary
+                      if (typeof value !== "string") {
+                        value = String(value);
+                      }
+
+                      // Allow user to type freely
+                      value = value.replace(/[^0-9,]/g, ""); // Remove non-numeric characters except comma
+                      value = value.replace(",", "."); // Replace comma with dot for parsing
+
+                      // Set raw value for validation
+                      setFieldValue(field, value);
+                    }}
+                    onBlur={(e) => {
+                      handleBlur(e);
+                      // Chỉ reformat nếu giá trị thực sự thay đổi
+                      const currentValue = e.target.value;
+                      let rawValue = parseVietnamNumber(currentValue);
+
+                      // Ensure rawValue is a number or empty string before reformatting
+                      if (typeof rawValue !== "string") {
+                        rawValue = String(rawValue);
+                      }
+
+                      // Chỉ format lại nếu giá trị đã thay đổi
+                      if (rawValue !== parseVietnamNumber(values[field])) {
+                        setFieldValue(field, formatVietnamNumber(rawValue));
+                      }
+                    }}
                     value={values[field]}
                     name={field}
                     sx={{ gridColumn: "span 2" }}
@@ -230,14 +356,6 @@ const PriceForm = () => {
                 <Button type="submit" color="secondary" variant="contained">
                   Cập Nhật
                 </Button>
-                {/* <Button
-                  color="error"
-                  variant="contained"
-                  onClick={() => handleDelete(selectedService._id)}
-                  sx={{ marginLeft: "10px" }}
-                >
-                  Xóa Dịch Vụ
-                </Button> */}
               </Box>
             </form>
           )}
