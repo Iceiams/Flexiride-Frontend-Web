@@ -190,7 +190,7 @@ const PendingDrivers = () => {
             color="error"
             onClick={() => updateApprovalStatus(params.row._id, false)}
           >
-            Không Duyệt
+            Từ chối
           </Button>
         </ButtonGroup>
       ),
