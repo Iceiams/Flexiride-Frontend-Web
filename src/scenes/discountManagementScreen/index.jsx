@@ -11,25 +11,18 @@ import {
   Modal,
   Form,
   InputNumber,
-  Tooltip,
-  Checkbox,
 } from "antd";
 import moment from "moment";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { QRCodeCanvas } from "qrcode.react";
 import api from "../../api/axiosConfig";
-import axios from "axios";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
-const { TextArea } = Input;
 
 const VoucherList = () => {
   const [loading, setLoading] = useState(false);
   const [vouchers, setVouchers] = useState([]);
-  const [services, setServices] = useState([]);
   const [serviceOptions, setServiceOptions] = useState([]);
-
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -38,65 +31,47 @@ const VoucherList = () => {
   const [filters, setFilters] = useState({
     search: "",
     status: "",
-    type: "",
     dateRange: null,
-    include_deleted: false, // Thêm bộ lọc hiển thị dữ liệu đã xóa
+    include_deleted: false, // Lọc voucher đã xóa
   });
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState(null);
   const [form] = Form.useForm();
 
-  // Trạng thái hiển thị mã QR
-  const [showQRCode, setShowQRCode] = useState({});
-
-  const handleToggleQRCode = (id, customId) => {
-    setShowQRCode((prev) => {
-      const isCurrentlyShown = prev[id];
-      if (isCurrentlyShown) return { ...prev, [id]: null }; // Ẩn mã QR
-      return { ...prev, [id]: customId }; // Hiển thị mã QR
-    });
-  };
-
-  const fetchServices = async () => {
+  // Lấy dữ liệu tùy chọn dịch vụ
+  const fetchServiceOptions = async () => {
     try {
-      const { data } = await axios.get(
+      const { data } = await api.get(
         "http://localhost:3000/service-option/getAllServicesWithOptions"
       );
       if (data.success) {
-        const formattedServices = data.data.map((service) => ({
-          value: service._id,
-          label: service.name,
-        }));
-        setServices(formattedServices);
-
-        // Lấy tùy chọn dịch vụ từ mỗi service
-        const formattedServiceOptions = data.data.flatMap((service) =>
+        const formattedOptions = data.data.flatMap((service) =>
           service.service_options.map((option) => ({
             value: option._id,
             label: `${service.name} - ${option.name}`,
           }))
         );
-        setServiceOptions(formattedServiceOptions);
+        setServiceOptions(formattedOptions);
       } else {
-        message.error("Failed to fetch services");
+        message.error("Failed to fetch service options");
       }
     } catch (error) {
-      message.error(`Error fetching services: ${error.message}`);
+      message.error(`Error fetching service options: ${error.message}`);
     }
   };
 
+  // Lấy danh sách voucher
   const fetchVouchers = async () => {
     setLoading(true);
     try {
       const params = {
         page: pagination.current || 1,
         limit: pagination.pageSize || 10,
-        include_deleted: filters.include_deleted ? "true" : "false", // Gửi trạng thái checkbox
+        include_deleted: filters.include_deleted ? "true" : "false",
       };
       if (filters.search) params.search = filters.search;
       if (filters.status) params.status = filters.status;
-      if (filters.type) params.type = filters.type;
       if (filters.dateRange) {
         params.start_date = filters.dateRange[0]?.toISOString();
         params.end_date = filters.dateRange[1]?.toISOString();
@@ -122,22 +97,7 @@ const VoucherList = () => {
     setLoading(false);
   };
 
-  const handleStatusChange = async (voucherId, newStatus) => {
-    try {
-      const response = await api.put(`/voucher/update-voucher/${voucherId}`, {
-        status: newStatus,
-      });
-      if (response.data.success) {
-        message.success("Cập nhật trạng thái thành công!");
-        fetchVouchers(); // Cập nhật lại danh sách
-      } else {
-        throw new Error(response.data.message);
-      }
-    } catch (error) {
-      message.error(`Lỗi khi cập nhật trạng thái: ${error.message}`);
-    }
-  };
-
+  // Tạo mới hoặc cập nhật voucher
   const handleCreateOrUpdate = async (values) => {
     try {
       const voucherData = {
@@ -176,12 +136,13 @@ const VoucherList = () => {
     }
   };
 
+  // Xóa voucher
   const handleDelete = async (id) => {
     try {
       const response = await api.delete(`/voucher/delete-voucher/${id}`);
       if (response.data.success) {
         message.success("Voucher deleted successfully");
-        setVouchers((prev) => prev.filter((voucher) => voucher._id !== id));
+        fetchVouchers();
       } else {
         throw new Error(response.data.message);
       }
@@ -189,6 +150,8 @@ const VoucherList = () => {
       message.error(`Failed to delete voucher: ${error.message}`);
     }
   };
+
+  // Khôi phục voucher
   const handleRestore = async (id) => {
     try {
       const response = await api.put(`/restore-voucher/${id}`);
@@ -203,6 +166,7 @@ const VoucherList = () => {
     }
   };
 
+  // Hiển thị form tạo/cập nhật
   const showCreateModal = () => {
     setEditingVoucher(null);
     form.resetFields();
@@ -220,61 +184,10 @@ const VoucherList = () => {
 
   const columns = [
     {
-      title: "ID",
-      key: "id",
-      render: (_, record) => (
-        <div style={{ textAlign: "center" }}>
-          <div>{record.custom_id}</div>
-          {showQRCode[record.custom_id] ? (
-            <QRCodeCanvas value={showQRCode[record.custom_id]} size={54} />
-          ) : (
-            <Button
-              type="primary"
-              style={{
-                backgroundColor: "#FFA500",
-                borderColor: "#FFA500",
-                color: "#FFF",
-              }}
-              onClick={() =>
-                handleToggleQRCode(record.custom_id, record.custom_id)
-              }
-            >
-              QR Code
-            </Button>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      width: 75,
-      render: (status, record) => {
-        if (record.is_deleted) {
-          return <span style={{ color: "red" }}>Đã xóa</span>;
-        }
-        const isExpired = new Date(record.end_date) < new Date();
-        if (isExpired) {
-          return <span style={{ color: "blue" }}>Hết hạn</span>;
-        }
-        return (
-          <Select
-            value={status}
-            onChange={(newStatus) => handleStatusChange(record._id, newStatus)}
-            style={{ width: 120 }}
-          >
-            <Option value="active">Hoạt động</Option>
-            <Option value="inactive">Không hoạt động</Option>
-          </Select>
-        );
-      },
-    },
-
-    {
-      title: "Thứ tự",
-      dataIndex: "priority",
-      key: "priority",
+      title: "STT",
+      key: "index",
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
       title: "Tên",
@@ -282,72 +195,45 @@ const VoucherList = () => {
       key: "name",
     },
     {
-      title: "Điểm",
-      dataIndex: "points_required",
-      key: "points_required",
-    },
-    {
-      title: "Loại voucher",
-      dataIndex: "type",
-      key: "type",
-      render: (type) => {
-        const types = {
-          percentage: "Percentage",
-          fixed: "Fixed Amount",
-          free_trip: "Free Trip",
-          discounted_seat: "Discounted Seat",
-          priority_service: "Priority Service",
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status, record) => {
+        if (record.is_deleted) {
+          return (
+            <span style={{ color: "#ff4d4f", fontWeight: "bold" }}>Đã xóa</span>
+          );
+        }
+
+        const statusColors = {
+          active: "#52c41a", // Xanh lá cây
+          inactive: "#bfbfbf", // Xám
+          expired: "#ff4d4f", // Đỏ
         };
-        return types[type] || type;
-      },
-    },
-    {
-      title: "Số lần/1 khách",
-      dataIndex: "limit_per_user",
-      key: "limit_per_user",
-    },
-    {
-      title: "Giá trị & Giảm tối đa",
-      key: "value",
-      render: (_, record) => {
-        const value =
-          record.type === "percentage"
-            ? `${record.value}%`
-            : `${record.value.toLocaleString()} VND`;
+
+        const statusLabels = {
+          active: "Hoạt động",
+          inactive: "Không hoạt động",
+          expired: "Hết hạn",
+        };
+
         return (
-          <div>
-            <div>{value}</div>
-            {record.max_discount && (
-              <Tooltip
-                title={`Max Discount: ${record.max_discount.toLocaleString()} VND`}
-              >
-                <span style={{ color: "gray" }}>
-                  (Max: {record.max_discount.toLocaleString()} VND)
-                </span>
-              </Tooltip>
-            )}
-          </div>
+          <span style={{ color: statusColors[status], fontWeight: "bold" }}>
+            {statusLabels[status] || status}
+          </span>
         );
       },
     },
-    // {
-    //   title: "Dịch vụ áp dụng",
-    //   key: "services",
-    //   render: (_, record) => (
-    //     <div>
-    //       {record.applicable_services?.map((service) => (
-    //         <span key={service._id} style={{ display: "block" }}>
-    //           {service.name}
-    //         </span>
-    //       ))}
-    //     </div>
-    //   ),
-    // },
     {
-      title: "Điều kiện",
-      dataIndex: "min_order_value",
-      key: "min_order_value",
+      title: "Giá trị giảm",
+      dataIndex: "value",
+      key: "value",
       render: (value) => `${value.toLocaleString()} VND`,
+    },
+    {
+      title: "Số lượng",
+      key: "quantity",
+      render: (_, record) => `${record.used_quantity}/${record.total_quantity}`,
     },
     {
       title: "Hạn sử dụng",
@@ -356,23 +242,6 @@ const VoucherList = () => {
         `${new Date(record.start_date).toLocaleDateString()} - 
          ${new Date(record.end_date).toLocaleDateString()}`,
     },
-
-    {
-      title: "Phương thức thanh toán",
-      key: "payment_methods",
-      render: (_, record) =>
-        record.payment_methods?.length
-          ? record.payment_methods.join(", ")
-          : "Không áp dụng",
-    },
-    // {
-    //   title: "Dịch vụ áp dụng",
-    //   key: "services",
-    //   render: (_, record) =>
-    //     record.applicable_services?.length
-    //       ? record.applicable_services.map((service) => service.name).join(", ")
-    //       : "Không áp dụng",
-    // },
     {
       title: "Dịch vụ áp dụng",
       key: "service_options",
@@ -382,12 +251,6 @@ const VoucherList = () => {
               .map((option) => option.name)
               .join(", ")
           : "Không áp dụng",
-    },
-
-    {
-      title: "Số mã voucher",
-      key: "quantity",
-      render: (_, record) => `${record.used_quantity}/${record.total_quantity}`,
     },
     {
       title: "",
@@ -403,15 +266,7 @@ const VoucherList = () => {
               <Button
                 icon={<DeleteOutlined />}
                 danger
-                onClick={() =>
-                  Modal.confirm({
-                    title: "Confirm delete",
-                    content: "Do you want to delete this voucher?",
-                    okText: "Yes",
-                    cancelText: "No",
-                    onOk: () => handleDelete(record._id),
-                  })
-                }
+                onClick={() => handleDelete(record._id)}
               />
             </>
           ) : (
@@ -423,6 +278,7 @@ const VoucherList = () => {
       ),
     },
   ];
+
   const voucherForm = (
     <Form
       form={form}
@@ -430,198 +286,129 @@ const VoucherList = () => {
       onFinish={handleCreateOrUpdate}
       initialValues={{
         status: "inactive",
-        type: "percentage",
-        limit_per_user: 1,
-        priority: 0,
       }}
     >
+      {/* Validate Tên voucher */}
       <Form.Item
         name="name"
         label="Tên voucher"
-        rules={[{ required: true, message: "Hãy nhập tên voucher!" }]}
+        rules={[
+          { required: true, message: "Hãy nhập tên voucher!" },
+          { max: 255, message: "Tên voucher không được dài quá 255 ký tự!" },
+        ]}
       >
         <Input />
       </Form.Item>
 
-      <Form.Item name="description" label="Mô tả">
-        <TextArea rows={4} />
-      </Form.Item>
-
+      {/* Validate Mô tả */}
       <Form.Item
-        name="type"
-        label="Loại voucher"
-        rules={[{ required: true, message: "Hãy chọn loại voucher!" }]}
+        name="description"
+        label="Mô tả"
+        rules={[{ max: 500, message: "Mô tả không được dài hơn 500 ký tự!" }]}
       >
-        <Select>
-          <Option value="percentage">Percentage</Option>
-          <Option value="fixed">Fixed Amount</Option>
-          <Option value="free_trip">Free Trip</Option>
-          <Option value="discounted_seat">Discounted Seat</Option>
-          <Option value="priority_service">Priority Service</Option>
-        </Select>
+        <Input.TextArea rows={4} />
       </Form.Item>
 
+      {/* Validate Giá trị giảm */}
       <Form.Item
         name="value"
-        label="Giá trị"
+        label="Số tiền giảm"
         rules={[
-          { required: true, message: "Hãy nhập giá trị!" },
+          { required: true, message: "Giá trị giảm giá là bắt buộc." },
           {
             type: "number",
-            min: 0,
-            message: "Giá trị phải lớn hơn hoặc bằng 0!",
+            min: 1,
+            message: "Giá trị giảm giá phải lớn hơn 0.",
+          },
+          {
+            type: "number",
+            max: 1000000,
+            message: "Giá trị giảm giá không được vượt quá 1,000,000 VND.",
           },
         ]}
       >
-        <InputNumber min={0} style={{ width: "100%" }} />
+        <InputNumber min={1} max={1000000} style={{ width: "100%" }} />
       </Form.Item>
 
-      <Form.Item name="max_discount" label="Giảm giá tối đa">
-        <InputNumber
-          min={0}
-          style={{ width: "100%" }}
-          placeholder="Nhập số tiền tối đa (nếu có)"
-        />
-      </Form.Item>
-
+      {/* Validate Thời gian hiệu lực */}
       <Form.Item
         name="dateRange"
         label="Thời gian hiệu lực"
         rules={[
-          { required: true, message: "Hãy chọn thời gian hiệu lực!" },
           {
-            validator: (_, value) =>
-              value && value[0] <= value[1]
-                ? Promise.resolve()
-                : Promise.reject("Ngày bắt đầu phải nhỏ hơn ngày kết thúc!"),
+            required: true,
+            // message: "Ngày bắt đầu và kết thúc là bắt buộc.",
+          },
+          {
+            validator: (_, value) => {
+              if (!value)
+                return Promise.reject("Ngày bắt đầu và kết thúc là bắt buộc.");
+              const [start, end] = value;
+              const now = moment();
+
+              if (start <= now) {
+                return Promise.reject(
+                  "Ngày bắt đầu phải là ngày trong tương lai."
+                );
+              }
+
+              if (start >= end) {
+                return Promise.reject(
+                  "Ngày bắt đầu phải nhỏ hơn ngày kết thúc."
+                );
+              }
+
+              return Promise.resolve();
+            },
           },
         ]}
       >
         <RangePicker showTime style={{ width: "100%" }} />
       </Form.Item>
 
+      {/* Validate Tổng số lượng */}
       <Form.Item
         name="total_quantity"
-        label="Tổng số lượng"
+        label="Số lượng tổng cộng"
         rules={[
-          { required: true, message: "Hãy nhập tổng số lượng!" },
+          { required: true, message: "Tổng số lượng là bắt buộc." },
+          { type: "number", min: 0, message: "Tổng số lượng không được âm." },
           {
             type: "number",
-            min: 0,
-            message: "Số lượng phải lớn hơn hoặc bằng 0!",
+            max: 10000,
+            message: "Tổng số lượng không được vượt quá 10,000.",
           },
         ]}
       >
-        <InputNumber min={0} style={{ width: "100%" }} />
+        <InputNumber min={0} max={10000} style={{ width: "100%" }} />
       </Form.Item>
 
-      <Form.Item
-        name="points_required"
-        label="Điểm yêu cầu"
-        rules={[
-          { required: true, message: "Hãy nhập điểm yêu cầu!" },
-          { type: "number", min: 0, message: "Điểm phải lớn hơn hoặc bằng 0!" },
-        ]}
-      >
-        <InputNumber min={0} style={{ width: "100%" }} />
-      </Form.Item>
-
-      <Form.Item
-        name="min_order_value"
-        label="Giá trị đơn hàng tối thiểu"
-        rules={[
-          { required: true, message: "Hãy nhập giá trị đơn hàng tối thiểu!" },
-          {
-            type: "number",
-            min: 0,
-            message: "Giá trị đơn hàng phải lớn hơn hoặc bằng 0!",
-          },
-        ]}
-      >
-        <InputNumber min={0} style={{ width: "100%" }} />
-      </Form.Item>
-
-      {/* <Form.Item name="applicable_services" label="Dịch vụ áp dụng">
+      {/* Validate Dịch vụ áp dụng */}
+      <Form.Item name="applicable_service_options" label="Dịch vụ áp dụng">
         <Select
           mode="multiple"
-          placeholder="Chọn các dịch vụ"
-          options={services}
-        />
-      </Form.Item> */}
-
-      <Form.Item
-        name="applicable_service_options"
-        label="Tùy chọn dịch vụ áp dụng"
-      >
-        <Select
-          mode="multiple"
-          placeholder="Chọn các tùy chọn dịch vụ"
+          placeholder="Chọn các dịch vụ áp dụng"
           options={serviceOptions}
         />
-      </Form.Item>
-
-      <Form.Item name="payment_methods" label="Phương thức thanh toán">
-        <Select
-          mode="multiple"
-          placeholder="Chọn phương thức thanh toán"
-          options={[
-            { value: "credit_card", label: "Credit Card" },
-            { value: "cash", label: "Cash" },
-          ]}
-        />
-      </Form.Item>
-
-      <Form.Item name="priority" label="Thứ tự ưu tiên">
-        <InputNumber
-          min={0}
-          style={{ width: "100%" }}
-          placeholder="Ưu tiên cao hơn với số nhỏ hơn"
-        />
-      </Form.Item>
-
-      <Form.Item
-        name="status"
-        label="Trạng thái"
-        rules={[{ required: true, message: "Hãy chọn trạng thái!" }]}
-      >
-        <Select>
-          <Option value="active">Hoạt động</Option>
-          <Option value="inactive">Không hoạt động</Option>
-          <Option value="expired" disabled>
-            Hết hạn (Tự động)
-          </Option>
-        </Select>
       </Form.Item>
     </Form>
   );
 
   useEffect(() => {
-    fetchServices();
+    fetchServiceOptions();
     fetchVouchers();
   }, [pagination.current, pagination.pageSize, JSON.stringify(filters)]);
 
   return (
     <Card title="Quản Lí Mã Khuyến Mãi">
-      <Space style={{ marginBottom: 16, marginRight: 20 }}>
+      <Space style={{ marginBottom: 16 }}>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={showCreateModal}
         >
-          Tạo Voucher Mới
+          Tạo Voucher
         </Button>
-        <Checkbox
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              include_deleted: e.target.checked,
-            }))
-          }
-        >
-          Hiển thị đã xóa
-        </Checkbox>
-      </Space>
-      <Space>
         <Input.Search
           placeholder="Tìm kiếm voucher..."
           value={filters.search}
@@ -646,28 +433,23 @@ const VoucherList = () => {
           <Option value="inactive">Không hoạt động</Option>
           <Option value="expired">Hết hạn</Option>
         </Select>
-
-        <Select
-          placeholder="Loại voucher"
-          value={filters.type}
-          onChange={(value) =>
-            setFilters((prev) => ({ ...prev, type: value || undefined }))
-          }
-          style={{ width: 200 }}
-          allowClear
-        >
-          <Option value="percentage">Percentage</Option>
-          <Option value="fixed">Fixed Amount</Option>
-          <Option value="free_trip">Free Trip</Option>
-          <Option value="discounted_seat">Discounted Seat</Option>
-          <Option value="priority_service">Priority Service</Option>
-        </Select>
         <RangePicker
           value={filters.dateRange}
           onChange={(dates) =>
             setFilters((prev) => ({ ...prev, dateRange: dates || undefined }))
           }
         />
+        <Button
+          type="default"
+          onClick={() =>
+            setFilters((prev) => ({
+              ...prev,
+              include_deleted: !prev.include_deleted,
+            }))
+          }
+        >
+          {filters.include_deleted ? "Ẩn đã xóa" : "Hiện đã xóa"}
+        </Button>
       </Space>
       <Table
         columns={columns}
@@ -686,8 +468,12 @@ const VoucherList = () => {
           },
         }}
         loading={loading}
+        locale={{
+          emptyText: filters.include_deleted
+            ? "Không có voucher nào đã xóa"
+            : "Không có voucher nào",
+        }}
       />
-
       <Modal
         title={editingVoucher ? "Cập Nhật Voucher" : "Tạo Voucher"}
         open={modalVisible}
