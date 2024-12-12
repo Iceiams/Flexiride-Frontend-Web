@@ -110,9 +110,15 @@ const RideStatisticsChart = () => {
 
       setStatsData(data);
     } catch (error) {
-      setError(
-        error.response?.data?.message || "Có lỗi xảy ra khi lấy dữ liệu."
-      );
+      if (error.response?.status === 401) {
+        // Lỗi phiên hết hạn, thông báo cho người dùng
+        setError("Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.");
+      } else {
+        // Các lỗi khác
+        setError(
+          error.response?.data?.message || "Có lỗi xảy ra khi lấy dữ liệu."
+        );
+      }
       setStatsData([]);
     } finally {
       setLoading(false);

@@ -12,6 +12,7 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
+import { Tooltip } from "@mui/material";
 
 const ListLockedUsers = () => {
   const theme = useTheme();
@@ -37,32 +38,51 @@ const ListLockedUsers = () => {
       setDrivers(updatedDrivers);
     } catch (error) {
       console.error("Error unlocking driver:", error);
-      // Cập nhật thông báo lỗi dựa trên phản hồi từ server
       if (error.response) {
-        setSnackbarMessage(
-          error.response.data.message || "Có lỗi xảy ra khi mở khóa tài khoản."
-        );
+        // Kiểm tra lỗi session hết hạn
+        if (
+          error.response.status === 401 ||
+          error.response.data.message?.includes("Session expired")
+        ) {
+          console.log("Session expired. Please log in again.");
+          setSnackbarMessage(
+            "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại."
+          );
+        } else {
+          setSnackbarMessage(
+            error.response.data.message ||
+              "Có lỗi xảy ra khi mở khóa tài khoản."
+          );
+        }
       } else {
         setSnackbarMessage("Có lỗi xảy ra khi mở khóa tài khoản.");
       }
+
       setSnackbarSeverity("error");
       setOpenSnackbar(true); // Mở Snackbar khi có lỗi
     }
   };
-
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
         const response = await api.get("/getLockedDrivers");
-        setDrivers(response.data.drivers);
-      } catch (err) {
-        // Kiểm tra mã trạng thái và đặt thông báo lỗi tương ứng
-        if (err.response && err.response.status === 404) {
-          setError("Không có tài khoản nào bị khóa.");
+        const fetchedDrivers = response.data.drivers || [];
+
+        if (fetchedDrivers.length === 0) {
+          // Danh sách rỗng, không phải lỗi
+          setDrivers([]);
+          setError(null);
         } else {
-          setError("Lỗi khi tải danh sách tài xế.");
+          // Có tài khoản bị khóa
+          setDrivers(fetchedDrivers);
+          setError(null);
         }
-        console.error(err);
+      } catch (err) {
+        console.error("Error fetching drivers:", err);
+        setDrivers([]); // Đảm bảo không có dữ liệu hiển thị khi gặp lỗi
+        setError(
+          "Không thể tải danh sách tài khoản. Có thể xảy ra lỗi hệ thống hoặc kết nối."
+        );
       } finally {
         setLoading(false);
       }
@@ -87,6 +107,7 @@ const ListLockedUsers = () => {
       </Box>
     );
   }
+
   if (error) {
     return (
       <Box
@@ -97,13 +118,35 @@ const ListLockedUsers = () => {
         flexDirection="column"
       >
         <Typography variant="h4" color="textSecondary">
-          <span role="img" aria-label="info">
+          <span role="img" aria-label="error">
             🚫
           </span>{" "}
-          {error}
+          Lỗi xảy ra
         </Typography>
         <Typography variant="body1" color="textSecondary" mt={2}>
-          Hiện tại không có tài khoản nào đang bị khóa.
+          {error}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!error && drivers.length === 0) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+        flexDirection="column"
+      >
+        <Typography variant="h4" color="textSecondary">
+          <span role="img" aria-label="info">
+            📋
+          </span>{" "}
+          Không có tài khoản nào bị khóa.
+        </Typography>
+        <Typography variant="body1" color="textSecondary" mt={2}>
+          Hiện tại không có tài khoản nào đang bị khóa. Bạn có thể quay lại sau.
         </Typography>
       </Box>
     );
@@ -156,7 +199,11 @@ const ListLockedUsers = () => {
       field: "lockReason",
       headerName: "Lí do khóa",
       flex: 1,
-      renderCell: (params) => params.row.lockReason || "",
+      renderCell: (params) => (
+        <Tooltip title={params.row.lockReason || "Không có lý do"}>
+          <span>{params.row.lockReason || ""}</span>
+        </Tooltip>
+      ),
     },
     {
       field: "status",
@@ -168,7 +215,7 @@ const ListLockedUsers = () => {
           color="error"
           onClick={() => unlockDriver(params.row._id)}
         >
-          Unlock
+          Mở Khóa
         </Button>
       ),
     },

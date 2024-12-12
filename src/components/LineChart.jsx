@@ -1,167 +1,102 @@
-import React, { useState, useEffect } from "react";
-import { ResponsiveLine } from "@nivo/line";
-import axios from "axios";
-import { format } from "date-fns";
+import React, { useState, useEffect, useCallback } from "react";
+import { ResponsiveBar } from "@nivo/bar";
 import {
+  Box,
   Typography,
-  Button,
   Select,
   MenuItem,
-  FormControl,
-  InputLabel,
-  Box,
-  Snackbar,
-  Alert,
   TextField,
+  Button,
+  CircularProgress,
 } from "@mui/material";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import SearchIcon from "@mui/icons-material/Search";
-import * as XLSX from "xlsx";
+import axios from "axios";
 import { useTheme } from "@mui/material/styles";
 import { tokens } from "../theme";
 import ExcelJS from "exceljs";
 
-const RevenueLineChart = () => {
+const RevenueChart = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
   const [filterType, setFilterType] = useState("month");
-  const [startDate, setStartDate] = useState(
-    new Date(new Date().setMonth(new Date().getMonth() - 6))
-  ); // 6 tháng trước
-  const [endDate, setEndDate] = useState(new Date()); // Hôm nay
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [chartData, setChartData] = useState([]);
   const [totalSystemRevenue, setTotalSystemRevenue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [chartUnit, setChartUnit] = useState("Ngàn VNĐ");
+  const [isApplyClicked, setIsApplyClicked] = useState(false);
 
-  const [validationError, setValidationError] = useState(null);
-
-  const validateDateRange = () => {
-    // Check if custom filter type is selected
-    if (filterType === "custom") {
-      // Check if start or end date is empty
-      if (!startDate || !endDate) {
-        setValidationError(
-          "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc."
-        );
-        return false;
-      }
-
-      // Check if start date is after end date
-      if (new Date(startDate) > new Date(endDate)) {
-        setValidationError(
-          "Phạm vi ngày tùy chỉnh không hợp lệ. Ngày bắt đầu phải trước ngày kết thúc."
-        );
-        return false;
-      }
-    }
-
-    // Clear any previous validation errors
-    setValidationError(null);
-    return true;
-  };
-
-  const fetchRevenueData = async () => {
-    if (!validateDateRange()) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
+  const fetchRevenueData = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      params.append("filterType", filterType);
-      params.append("startDate", format(startDate, "yyyy-MM-dd"));
-      params.append("endDate", format(endDate, "yyyy-MM-dd"));
+      setError(null);
+      setLoading(true);
+
+      const params = { filterType };
+
+      // Kiểm tra khi filterType là custom
+      if (filterType === "custom") {
+        if (!startDate || !endDate) {
+          setError("Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
+          setLoading(false);
+          return; // Không gọi API nếu thiếu thông tin
+        }
+        params.startDate = startDate;
+        params.endDate = endDate;
+      }
 
       const response = await axios.get(
-        `http://localhost:3000/admin/revenueLineStatistic?${params.toString()}`
+        "http://localhost:3000/admin/revenueLineStatistic",
+        { params }
       );
 
-      if (
-        !response.data ||
-        !response.data.data ||
-        response.data.data.length === 0
-      ) {
-        setChartData([]);
-        setTotalSystemRevenue(0);
-        setLoading(false);
-        return;
-      }
+      const data = response.data.data;
+      const processedData = processChartData(data);
 
-      const sortedData = response.data.data.sort(
-        (a, b) => new Date(a.date) - new Date(b.date)
-      );
-
-      const processedData = processChartData(sortedData);
       setChartData(processedData);
-      setTotalSystemRevenue(response.data.totalSystemRevenue || 0);
-
-      // Tính toán giá trị lớn nhất trong dữ liệu và cập nhật chartUnit
-      const allRevenueValues = processedData.flatMap((service) =>
-        service.data.map((point) => point.y)
-      );
-      const maxRevenueValue = Math.max(...allRevenueValues);
-
-      if (maxRevenueValue >= 1000000) {
-        setChartUnit("Triệu VNĐ");
-      } else {
-        setChartUnit("Ngàn VNĐ");
-      }
-
-      setLoading(false);
+      setTotalSystemRevenue(response.data.totalSystemRevenue || "0 ₫");
     } catch (err) {
-      setError(err);
-      setChartData([]);
-      setTotalSystemRevenue(0);
+      setError("Lỗi khi lấy dữ liệu doanh thu. Vui lòng thử lại.");
+    } finally {
       setLoading(false);
+      setIsApplyClicked(false); // Reset trạng thái
     }
-  };
+  }, [filterType, startDate, endDate]);
 
   const processChartData = (data) => {
-    if (!data || data.length === 0) {
-      return [];
-    }
+    const result = [];
+    const serviceNames = new Set();
 
-    const serviceMap = {};
+    data.forEach((item) => {
+      let formattedDate = item.date;
 
-    try {
-      data.forEach((item) => {
-        if (item.services && Array.isArray(item.services)) {
-          item.services.forEach((service) => {
-            if (!service || !service.serviceName) return;
+      // Định dạng ngày hoặc tháng dựa trên filterType
+      if (filterType === "day") {
+        const date = new Date(item.date);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        formattedDate = `${day}-${month}`; // Ngày trước tháng
+      } else if (filterType === "month") {
+        const [year, month] = item.date.split("-");
+        formattedDate = `${month}-${year}`; // Tháng trước năm
+      }
 
-            const serviceName = service.serviceName;
+      const row = { date: formattedDate };
+      item.services.forEach((service) => {
+        serviceNames.add(service.serviceName);
+        row[service.serviceName] = service.systemRevenue || 0;
+      });
+      result.push(row);
+    });
 
-            if (!serviceMap[serviceName]) {
-              serviceMap[serviceName] = {
-                id: serviceName,
-                data: [],
-              };
-            }
-
-            if (
-              item.date &&
-              service.systemRevenue !== undefined &&
-              service.systemRevenue !== null
-            ) {
-              serviceMap[serviceName].data.push({
-                x: new Date(item.date),
-                y: Number(service.systemRevenue) || 0,
-              });
-            }
-          });
+    return result.map((row) => {
+      serviceNames.forEach((name) => {
+        if (!row[name]) {
+          row[name] = 0;
         }
       });
-    } catch (error) {
-      console.error("Error processing chart data:", error);
-      return [];
-    }
-
-    return Object.values(serviceMap);
+      return row;
+    });
   };
 
   const exportToExcel = () => {
@@ -173,8 +108,7 @@ const RevenueLineChart = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Doanh Thu");
 
-    // Thêm tiêu đề chính
-    worksheet.mergeCells("A1:B1"); // Gộp cột
+    worksheet.mergeCells("A1:B1");
     const mainTitle = worksheet.getCell("A1");
     mainTitle.value = "BÁO CÁO DOANH THU HỆ THỐNG";
     mainTitle.alignment = { horizontal: "center", vertical: "middle" };
@@ -185,17 +119,17 @@ const RevenueLineChart = () => {
       fgColor: { argb: "1F4E78" },
     };
 
-    worksheet.addRow([]); // Dòng trống
+    worksheet.addRow([]);
 
     let grandTotal = 0;
 
-    // Vòng lặp qua từng dịch vụ
     chartData.forEach((series) => {
-      const serviceTotal = series.data.reduce((sum, point) => sum + point.y, 0);
+      const serviceTotal = Object.values(series)
+        .slice(1)
+        .reduce((sum, value) => sum + value, 0);
       grandTotal += serviceTotal;
 
-      // Thêm tiêu đề dịch vụ
-      const serviceTitleRow = worksheet.addRow([`Tên Dịch Vụ: ${series.id}`]);
+      const serviceTitleRow = worksheet.addRow([`Tên Dịch Vụ: Tổng`]);
       serviceTitleRow.font = {
         bold: true,
         size: 14,
@@ -204,33 +138,31 @@ const RevenueLineChart = () => {
       serviceTitleRow.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "4CAF50" }, // Màu xanh lá
+        fgColor: { argb: "4CAF50" },
       };
 
-      // Thêm tiêu đề cột
       const headerRow = worksheet.addRow(["Thời Gian", "Doanh Thu (VNĐ)"]);
       headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
       headerRow.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "2196F3" }, // Màu xanh dương
+        fgColor: { argb: "2196F3" },
       };
       headerRow.alignment = { horizontal: "center" };
 
-      // Thêm chi tiết doanh thu
-      series.data.forEach((point) => {
-        worksheet.addRow([format(new Date(point.x), "dd/MM/yyyy"), point.y]);
+      Object.entries(series).forEach(([key, value]) => {
+        if (key !== "date") {
+          worksheet.addRow([key, value]);
+        }
       });
 
-      // Thêm tổng doanh thu của dịch vụ
       const totalRow = worksheet.addRow(["Tổng doanh thu", serviceTotal]);
-      totalRow.font = { bold: true, color: { argb: "FF0000" } }; // Màu đỏ
+      totalRow.font = { bold: true, color: { argb: "FF0000" } };
       totalRow.alignment = { horizontal: "right" };
 
-      worksheet.addRow([]); // Dòng trống
+      worksheet.addRow([]);
     });
 
-    // Thêm tổng doanh thu toàn bộ
     const grandTotalRow = worksheet.addRow([
       "Tổng doanh thu toàn bộ",
       grandTotal,
@@ -238,378 +170,252 @@ const RevenueLineChart = () => {
     grandTotalRow.font = { bold: true, size: 12, color: { argb: "FF0000" } };
     grandTotalRow.alignment = { horizontal: "right" };
 
-    // Định dạng cột
-    worksheet.columns = [
-      { width: 30 }, // Cột "Thời Gian" hoặc "Tên Dịch Vụ"
-      { width: 20 }, // Cột "Doanh Thu"
-    ];
+    worksheet.columns = [{ width: 30 }, { width: 20 }];
 
-    // Xuất file Excel
     workbook.xlsx.writeBuffer().then((buffer) => {
       const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `Doanh_Thu_${format(new Date(), "yyyy-MM-dd")}.xlsx`;
+      link.download = `Doanh_Thu_${new Date().toISOString().slice(0, 10)}.xlsx`;
       link.click();
     });
   };
 
-  const getTickValuesFromData = () => {
-    const ticks = new Set(); // Sử dụng Set để tránh trùng lặp
-
-    // Lặp qua tất cả các series trong chartData
-    chartData.forEach((series) => {
-      series.data.forEach((point) => {
-        ticks.add(point.x); // Lấy `x` (ngày) từ từng điểm dữ liệu
-      });
-    });
-    return Array.from(ticks).sort((a, b) => new Date(a) - new Date(b)); // Sắp xếp theo thời gian
-  };
-
   useEffect(() => {
-    fetchRevenueData();
-  }, [filterType, startDate, endDate]);
+    // Chỉ gọi API nếu không phải custom hoặc đã nhấn nút "Áp dụng"
+    if (filterType !== "custom" || isApplyClicked) {
+      fetchRevenueData();
+      setIsApplyClicked(false); // Reset lại trạng thái
+    }
+  }, [filterType, isApplyClicked]);
+
+  const serviceKeys =
+    chartData.length > 0
+      ? Object.keys(chartData[0]).filter((key) => key !== "date")
+      : [];
 
   return (
-    <Box sx={{ maxWidth: 900, margin: "0 auto", padding: "16px" }}>
-      {/* Bộ lọc */}
+    <Box>
       <Box
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={4}
+        mb={3}
       >
-        <FormControl style={{ minWidth: 150 }}>
-          <InputLabel>Loại thời gian</InputLabel>
+        <Box
+          sx={{
+            backgroundColor: colors.primary[400],
+            color: colors.greenAccent[400],
+            borderRadius: "8px",
+            padding: "16px",
+            boxShadow: 3,
+            textAlign: "center",
+            mb: 3,
+            marginTop: "40px",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: "500",
+              fontSize: "17px",
+              textTransform: "uppercase",
+            }}
+          >
+            Tổng Doanh Thu Hệ Thống
+          </Typography>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              fontSize: "28px",
+              color: colors.greenAccent[500],
+              marginTop: "8px",
+            }}
+          >
+            {totalSystemRevenue}
+          </Typography>
+        </Box>
+
+        {/* Bộ lọc và nút */}
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={2}
+          sx={{
+            marginTop: "40px",
+          }}
+        >
           <Select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            label="Loại thời gian"
+            style={{ minWidth: 150 }}
           >
-            <MenuItem value="day">Ngày</MenuItem>
-            <MenuItem value="month">Tháng</MenuItem>
+            <MenuItem value="day">Tháng</MenuItem>
+            <MenuItem value="month">Năm</MenuItem>
             <MenuItem value="custom">Tùy chỉnh</MenuItem>
           </Select>
-        </FormControl>
-        {filterType === "custom" && (
-          <Box display="flex" gap={2} alignItems="center">
-            <TextField
-              type="date"
-              label="Ngày bắt đầu"
-              value={format(startDate, "yyyy-MM-dd")}
-              onChange={(e) => setStartDate(new Date(e.target.value))}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              type="date"
-              label="Ngày kết thúc"
-              value={format(endDate, "yyyy-MM-dd")}
-              onChange={(e) => setEndDate(new Date(e.target.value))}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-        )}
-        <Box>
+          {filterType === "custom" && (
+            <>
+              <TextField
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                label="Ngày bắt đầu"
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                label="Ngày kết thúc"
+                InputLabelProps={{ shrink: true }}
+              />
+              <Button onClick={fetchRevenueData} variant="contained">
+                Áp dụng
+              </Button>
+            </>
+          )}
           <Button
             variant="contained"
-            onClick={fetchRevenueData}
-            startIcon={<SearchIcon />}
-            sx={{
-              backgroundColor: "#4CAF50",
-              color: "#fff",
-              "&:hover": {
-                backgroundColor: "#388E3C",
-              },
-              minWidth: 130,
-            }}
-          >
-            Tra cứu
-          </Button>
-          <Button
-            variant="outlined"
             onClick={exportToExcel}
-            startIcon={<FileDownloadIcon />}
-            disabled={chartData.length === 0}
-            sx={{
-              color: "#4CAF50",
-              borderColor: "#4CAF50",
-              "&:hover": {
-                borderColor: "#388E3C",
-                backgroundColor: "#E8F5E9",
-              },
-              minWidth: 130,
-            }}
+            style={{ backgroundColor: "#4CAF50", color: "white" }}
           >
             Xuất Excel
           </Button>
         </Box>
       </Box>
-      <Snackbar
-        open={!!validationError}
-        autoHideDuration={6000}
-        onClose={() => setValidationError(null)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setValidationError(null)}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
-          {validationError}
-        </Alert>
-      </Snackbar>
-      <Box sx={{ textAlign: "center", marginBottom: 2 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            color: colors.grey[100],
-            fontSize: "14px",
-            fontStyle: "italic",
-          }}
-        ></Typography>
-      </Box>
-      {/* Hiển thị loading hoặc lỗi */}
-      {loading && (
-        <Typography variant="body1" color="textSecondary" align="center">
-          Đang tải dữ liệu...
-        </Typography>
-      )}
-      {error && (
-        <Typography variant="body1" color="error" align="center">
-          Lỗi: {error.message}
-        </Typography>
-      )}
 
-      {/* Phần render biểu đồ còn lại */}
-      {!loading && !error && chartData.length > 0 ? (
-        <Box sx={{ height: 550, position: "relative" }}>
-          {/* Y-Axis Label */}
+      {loading ? (
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="400px"
+        >
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Typography color="error" align="center">
+          {error}
+        </Typography>
+      ) : (
+        <Box position="relative" height="500px">
           <Typography
-            variant="body2"
-            sx={{
+            style={{
               position: "absolute",
-              top: "2px",
-              left: "0",
-              transform: 0,
+              top: "10px",
+              left: "40px",
+              transform: "translate(20%, 0)",
               textAlign: "center",
+              fontSize: "15px",
               color: colors.grey[100],
-              fontSize: "14px",
             }}
           >
-            Doanh Thu Hệ Thống ({chartUnit})
+            Tổng doanh thu (VNĐ)
           </Typography>
+
           <Typography
-            variant="h5"
-            sx={{
-              position: "absolute",
-              top: "5%",
-              left: "0",
-              textAlign: "center",
-              color: colors.greenAccent[400],
-              fontSize: "16px",
-            }}
-          >
-            Tổng: {totalSystemRevenue}
-          </Typography>
-          {/* X-Axis Label */}
-          <Typography
-            variant="body2"
-            sx={{
+            style={{
               position: "absolute",
               bottom: "90px",
-              left: "93%",
-              transform: "translateX(-50%)",
+              right: "90px",
               textAlign: "center",
+              fontSize: "15px",
               color: colors.grey[100],
-              fontSize: "14px",
             }}
           >
             Thời gian
           </Typography>
 
-          <ResponsiveLine
-            data={chartData.length > 0 ? chartData : []}
-            margin={{ top: 70, right: 110, bottom: 100, left: 60 }}
-            xScale={{
-              type: "time",
-              format: "%Y-%m-%d", // Định dạng thời gian chính
-              precision: filterType === "month" ? "month" : "day",
-              useUTC: false,
-              nice: true,
-            }}
+          <ResponsiveBar
+            data={chartData}
+            keys={serviceKeys}
+            indexBy="date"
+            margin={{ top: 50, right: 180, bottom: 100, left: 180 }}
+            padding={0.3}
+            groupMode="grouped"
             axisBottom={{
-              format: (value) => {
-                const date = new Date(value); // Chuyển giá trị x thành ngày
-                if (filterType === "custom") {
-                  const startYear = startDate.getFullYear();
-                  const endYear = endDate.getFullYear();
-                  const startMonth = startDate.getMonth();
-                  const endMonth = endDate.getMonth();
-
-                  if (startYear === endYear) {
-                    if (startMonth === endMonth) {
-                      // Cùng năm, cùng tháng -> Ngày/Tháng
-                      return format(date, "dd/MM");
-                    } else {
-                      // Cùng năm, khác tháng -> Tháng/Năm
-                      return format(date, "MM/yyyy");
-                    }
-                  } else {
-                    // Khác năm -> Chỉ Năm
-                    return format(date, "yyyy");
-                  }
-                } else if (filterType === "month") {
-                  return format(date, "MM/yyyy"); // Tháng/Năm
-                } else {
-                  return format(date, "dd/MM"); // Ngày/Tháng/Năm
-                }
-              },
-              tickValues: getTickValuesFromData(), // Chỉ hiển thị những ngày có data
-              tickRotation: -45,
-            }}
-            yScale={{
-              type: "linear",
-              min: "auto",
-              max: "auto",
+              tickSize: 5,
+              tickPadding: 10,
+              tickRotation: 0,
+              legend: "",
+              format: (value) => value,
             }}
             axisLeft={{
-              format: (value) =>
-                chartUnit === "Triệu VNĐ"
-                  ? `${(value / 1000).toFixed(0)} `
-                  : `${(value / 1000).toFixed(0)}`,
+              tickSize: 5,
+              tickPadding: 5,
+              legend: "",
             }}
-            theme={{
-              crosshair: {
-                line: {
-                  stroke: "#FF5722",
-                  strokeWidth: 0.7,
-                  strokeDasharray: "6 6",
-                },
-              },
-              grid: {
-                line: {
-                  stroke: "#FFFFFF",
-                  strokeDasharray: "4 4",
-                },
-              },
-              axis: {
-                domain: {
-                  line: {
-                    stroke: "#FFFFFF",
-                  },
-                },
-                ticks: {
-                  line: {
-                    stroke: "#FFFFFF",
-                  },
-                  text: {
-                    fill: "#F4F4F4",
-                    fontSize: 13,
-                  },
-                },
-              },
-
-              legends: {
-                text: {
-                  fontSize: 13, // Tăng kích thước chữ trong legend
-                },
-              },
-            }}
-            pointSize={10}
-            pointBorderWidth={2}
-            pointBorderColor={{ from: "serieColor" }}
-            pointColor={{ theme: "background" }}
-            enableGridX={false}
-            enableGridY={true}
-            useMesh={true}
             legends={[
               {
+                dataFrom: "keys",
                 anchor: "bottom",
                 direction: "row",
                 justify: false,
                 translateX: 0,
-                translateY: 100,
-                itemsSpacing: 10,
-                itemDirection: "left-to-right",
+                translateY: 90,
+                itemsSpacing: 40,
                 itemWidth: 120,
-                itemHeight: 20,
-                itemTextColor: "#EDEDED",
-                symbolSize: 15,
-                symbolShape: "circle",
-                effects: [
-                  {
-                    on: "hover",
-                    style: {
-                      itemTextColor: "#FFFFFF",
-                    },
-                  },
-                ],
+                itemHeight: 10,
+                itemDirection: "left-to-right",
+                itemOpacity: 0.85,
+                symbolSpacing: 30,
+                symbolShape: ({ x, y, fill, width, height }) => (
+                  <rect
+                    x={x}
+                    y={y + 6}
+                    width={40}
+                    height={10}
+                    fill={fill}
+                    rx={2}
+                    ry={2}
+                  />
+                ),
+                textColor: "#FFFFFF",
               },
             ]}
-            tooltip={({ point }) => {
-              const { serieId, data } = point;
-
-              let dateFormat = "dd/MM/yyyy"; // Mặc định
-
-              if (filterType === "custom") {
-                const startYear = startDate.getFullYear();
-                const endYear = endDate.getFullYear();
-                const startMonth = startDate.getMonth();
-                const endMonth = endDate.getMonth();
-
-                if (startYear === endYear) {
-                  if (startMonth === endMonth) {
-                    // Cùng năm, cùng tháng -> Ngày/Tháng
-                    dateFormat = "dd/MM";
-                  } else {
-                    // Cùng năm, khác tháng -> Tháng/Năm
-                    dateFormat = "MM/yyyy";
-                  }
-                } else {
-                  // Khác năm -> Chỉ Năm
-                  dateFormat = "yyyy";
-                }
-              } else if (filterType === "month") {
-                dateFormat = "MM/yyyy"; // Tháng/Năm
-              }
-
-              const formattedDate = format(new Date(data.x), dateFormat);
-
-              const formattedRevenue = new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-                minimumFractionDigits: 0,
-              }).format(data.y);
-
-              return (
-                <div
-                  style={{
-                    background: "#333",
-                    color: "#fff",
-                    padding: "10px",
-                    borderRadius: "5px",
-                    boxShadow: "0 3px 6px rgba(0,0,0,0.2)",
-                  }}
-                >
-                  <strong>{serieId}</strong>
-                  <br />
-                  Thời gian: {formattedDate}
-                  <br />
-                  Doanh thu: {formattedRevenue}
-                </div>
-              );
+            tooltip={({ id, value, indexValue }) => (
+              <div
+                style={{
+                  padding: "10px",
+                  background: "#333",
+                  color: "#fff",
+                }}
+              >
+                <strong>{id}</strong>: {value.toLocaleString("vi-VN")} VNĐ
+                <br />
+                Thời gian: {indexValue}
+              </div>
+            )}
+            label={null}
+            animate={true}
+            theme={{
+              axis: {
+                ticks: {
+                  line: {
+                    stroke: "#777",
+                    strokeWidth: 1,
+                  },
+                  text: {
+                    fontSize: 13, // Làm to hơn chữ hiển thị
+                    fill: "#FFFFFF",
+                  },
+                },
+              },
+              legends: {
+                text: {
+                  fill: "#FFFFFF",
+                },
+              },
             }}
           />
         </Box>
-      ) : (
-        <Typography variant="body1" color="textSecondary" align="center">
-          Không có dữ liệu cho khoảng thời gian được chọn
-        </Typography>
       )}
     </Box>
   );
 };
 
-export default RevenueLineChart;
+export default RevenueChart;

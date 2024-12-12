@@ -32,76 +32,81 @@ const PendingWithdrawRequests = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
+
+  const fetchPendingWithdrawals = async () => {
+    try {
+      const response = await api.get(
+        "http://localhost:3000/driver/wallet/withdraw-requests/pending"
+      );
+      setWithdrawRequests(
+        response.data.pendingWithdrawals.map((req, index) => ({
+          ...req,
+          index: index + 1,
+        }))
+      );
+    } catch (err) {
+      console.error("Error fetching pending withdrawals:", err);
+      showSnackbar("Không thể tải danh sách. Vui lòng thử lại sau.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPendingWithdrawals = async () => {
-      try {
-        const response = await api.get(
-          "http://localhost:3000/driver/wallet/withdraw-requests/pending"
-        );
-
-        // Thêm số thứ tự vào mỗi dòng dữ liệu
-        const updatedWithdrawRequests = response.data.pendingWithdrawals.map(
-          (request, index) => ({
-            ...request,
-            index: index + 1, // Thêm số thứ tự
-          })
-        );
-
-        setWithdrawRequests(updatedWithdrawRequests);
-      } catch (err) {
-        console.error("Error fetching pending withdrawals:", err);
-        setError("Failed to load pending withdrawals");
-        showSnackbar("Failed to load pending withdrawals", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchPendingWithdrawals();
   }, []);
 
-  const processWithdrawRequest = async (transactionId, approve) => {
+  // Approve a withdrawal request
+  const processApproveRequest = async (transactionId) => {
     try {
-      const url = `http://localhost:3000/driver/wallet/withdraw-request/approve`;
-      const response = await api.post(url, {
-        transactionId,
-        action: approve ? "APPROVE" : "REJECT",
-      });
+      const response = await api.post(
+        "http://localhost:3000/driver/wallet/withdraw-request/approve",
+        { transactionId }
+      );
+      if (response.data.success) {
+        showSnackbar("Yêu cầu rút tiền đã được phê duyệt.", "success");
 
-      // Check the response from the server
-      if (response.data && response.data.success) {
-        // Remove the transaction from the list
-        setWithdrawRequests((prev) =>
-          prev.filter((transaction) => transaction._id !== transactionId)
-        );
-
-        // Show success message
-        showSnackbar(
-          approve
-            ? "Yêu cầu rút tiền đã được xử lý."
-            : "Yêu cầu rút tiền đã bị từ chối",
-          "success"
-        );
-      } else {
-        // If the response indicates a failure
-        showSnackbar(
-          response.data?.message || "Có lỗi xảy ra khi xử lý yêu cầu",
-          "error"
+        // Cập nhật trạng thái trực tiếp
+        setWithdrawRequests((prevRequests) =>
+          prevRequests.map((request) =>
+            request._id === transactionId
+              ? { ...request, status: "APPROVED" }
+              : request
+          )
         );
       }
-    } catch (error) {
-      console.error("Error processing withdrawal request:", error);
-
-      // More detailed error handling
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Có lỗi xảy ra khi xử lý yêu cầu rút tiền";
-
-      showSnackbar(errorMessage, "error");
+    } catch (err) {
+      console.error("Error approving request:", err);
+      showSnackbar(
+        err.response?.data?.message || "Có lỗi xảy ra khi duyệt yêu cầu.",
+        "error"
+      );
     }
   };
+
+  const processCompleteRequest = async (transactionId) => {
+    try {
+      const response = await api.post(
+        "http://localhost:3000/driver/wallet/withdraw-request/complete",
+        { transactionId }
+      );
+      if (response.data.success) {
+        showSnackbar("Giao dịch đã được hoàn tất.", "success");
+
+        // Xóa dòng khỏi danh sách
+        setWithdrawRequests((prevRequests) =>
+          prevRequests.filter((request) => request._id !== transactionId)
+        );
+      }
+    } catch (err) {
+      console.error("Error completing request:", err);
+      showSnackbar(
+        err.response?.data?.message || "Có lỗi xảy ra khi hoàn tất giao dịch.",
+        "error"
+      );
+    }
+  };
+
   const showSnackbar = (message, severity) => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
@@ -195,29 +200,41 @@ const PendingWithdrawRequests = () => {
       field: "status",
       headerName: "Trạng thái",
       flex: 1,
-      renderCell: (params) => {
-        if (params.value === "PENDING") {
-          return "Đang chờ";
-        } else {
-          return "Không xác định"; // Giá trị mặc định nếu không phải "pending"
-        }
-      },
+      renderCell: (params) =>
+        params.value === "PENDING"
+          ? "Đang chờ"
+          : params.value === "APPROVED"
+          ? "Đã duyệt"
+          : "",
     },
 
     {
       field: "Hành động",
       flex: 1,
       renderCell: (params) => (
-        <ButtonGroup variant="contained">
-          <Button
-            color="success"
-            onClick={() => processWithdrawRequest(params.row._id, true)}
-          >
-            Duyệt
-          </Button>
-          {/* <Button color="error" onClick={() => handleOpenRejectDialog()}>
-            Từ chối
-          </Button> */}
+        <ButtonGroup>
+          {params.row.status === "PENDING" && (
+            <Button
+              style={{
+                backgroundColor: "#2E8B57", // Màu xanh
+                color: "#FFFFFF", // Màu chữ trắng
+              }}
+              onClick={() => processApproveRequest(params.row._id)}
+            >
+              Duyệt
+            </Button>
+          )}
+          {params.row.status === "APPROVED" && (
+            <Button
+              style={{
+                backgroundColor: "#FFA726", // Màu cam
+                color: "#FFFFFF", // Màu chữ trắng
+              }}
+              onClick={() => processCompleteRequest(params.row._id)}
+            >
+              Hoàn tất
+            </Button>
+          )}
         </ButtonGroup>
       ),
     },
@@ -292,25 +309,6 @@ const PendingWithdrawRequests = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-
-      <Dialog open={openRejectDialog} onClose={handleCloseRejectDialog}>
-        <DialogTitle>Nhập lý do từ chối</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Lý do từ chối"
-            type="text"
-            fullWidth
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseRejectDialog}>Hủy</Button>
-          <Button onClick={() => handleReject(transactionId)}>Từ chối</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

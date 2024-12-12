@@ -32,14 +32,14 @@ const VoucherList = () => {
     search: "",
     status: "",
     dateRange: null,
-    include_deleted: false, // Lọc voucher đã xóa
+    include_deleted: false,
   });
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState(null);
   const [form] = Form.useForm();
+  const formatDate = (date) => moment(date).format("DD/MM/YYYY");
 
-  // Lấy dữ liệu tùy chọn dịch vụ
   const fetchServiceOptions = async () => {
     try {
       const { data } = await api.get(
@@ -47,10 +47,12 @@ const VoucherList = () => {
       );
       if (data.success) {
         const formattedOptions = data.data.flatMap((service) =>
-          service.service_options.map((option) => ({
-            value: option._id,
-            label: `${service.name} - ${option.name}`,
-          }))
+          service.service_options
+            .filter((option) => option?._id)
+            .map((option) => ({
+              value: option._id,
+              label: `${service.name} - ${option.name}`,
+            }))
         );
         setServiceOptions(formattedOptions);
       } else {
@@ -100,11 +102,22 @@ const VoucherList = () => {
   // Tạo mới hoặc cập nhật voucher
   const handleCreateOrUpdate = async (values) => {
     try {
+      const cleanedOptions = values.applicable_service_options?.filter(
+        (option) => option !== null && option !== undefined
+      );
+
       const voucherData = {
         ...values,
-        start_date: values.dateRange[0].toISOString(),
-        end_date: values.dateRange[1].toISOString(),
+        applicable_service_options: cleanedOptions,
+        type: "fixed",
+        min_order_value: values.min_order_value || 0,
+        start_date:
+          editingVoucher?.start_date === values.dateRange[0]?.toISOString()
+            ? editingVoucher.start_date
+            : values.dateRange[0]?.toISOString(),
+        end_date: values.dateRange[1]?.toISOString(),
       };
+
       delete voucherData.dateRange;
 
       let response;
@@ -119,7 +132,10 @@ const VoucherList = () => {
 
       if (response.data.success) {
         message.success(
-          `Voucher ${editingVoucher ? "updated" : "created"} successfully`
+          editingVoucher?.status === "expired" &&
+            voucherData.end_date > new Date()
+            ? "Trạng thái voucher đã được đặt lại thành 'Không hoạt động'."
+            : `Voucher ${editingVoucher ? "đã cập nhật" : "đã tạo"} thành công!`
         );
         setModalVisible(false);
         form.resetFields();
@@ -128,11 +144,7 @@ const VoucherList = () => {
         throw new Error(response.data.message);
       }
     } catch (error) {
-      message.error(
-        `Failed to ${editingVoucher ? "update" : "create"} voucher: ${
-          error.message
-        }`
-      );
+      message.error(`Lỗi: ${error.message}`);
     }
   };
 
@@ -141,7 +153,7 @@ const VoucherList = () => {
     try {
       const response = await api.delete(`/voucher/delete-voucher/${id}`);
       if (response.data.success) {
-        message.success("Voucher deleted successfully");
+        message.success("Cập nhật thành công!");
         fetchVouchers();
       } else {
         throw new Error(response.data.message);
@@ -156,7 +168,7 @@ const VoucherList = () => {
     try {
       const response = await api.put(`/restore-voucher/${id}`);
       if (response.data.success) {
-        message.success("Voucher restored successfully");
+        message.success("Khôi phục thành công!");
         fetchVouchers();
       } else {
         throw new Error(response.data.message);
@@ -166,7 +178,30 @@ const VoucherList = () => {
     }
   };
 
-  // Hiển thị form tạo/cập nhật
+  const handleChangeStatus = async (id, newStatus) => {
+    try {
+      const response = await api.put(`/voucher/update-voucher/${id}`, {
+        status: newStatus,
+      });
+
+      if (response.data.success) {
+        message.success("Cập nhật trạng thái thành công!");
+        fetchVouchers();
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error) {
+      message.error("Lỗi khi cập nhật trạng thái: " + error.message);
+    }
+  };
+
+  const confirmDelete = (id) => {
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn xóa voucher này?",
+      onOk: () => handleDelete(id),
+    });
+  };
+
   const showCreateModal = () => {
     setEditingVoucher(null);
     form.resetFields();
@@ -174,11 +209,18 @@ const VoucherList = () => {
   };
 
   const showEditModal = (record) => {
-    setEditingVoucher(record);
+    const validOptions = record.applicable_service_options
+      ?.filter((option) => option && option._id)
+      .map((option) => option._id);
+
     form.setFieldsValue({
       ...record,
       dateRange: [moment(record.start_date), moment(record.end_date)],
+      type: record.type, // Hiển thị loại voucher
+      min_order_value: record.min_order_value, // Hiển thị giá trị tối thiểu
+      applicable_service_options: validOptions,
     });
+    setEditingVoucher(record);
     setModalVisible(true);
   };
 
@@ -199,30 +241,52 @@ const VoucherList = () => {
       dataIndex: "status",
       key: "status",
       render: (status, record) => {
-        if (record.is_deleted) {
-          return (
-            <span style={{ color: "#ff4d4f", fontWeight: "bold" }}>Đã xóa</span>
-          );
-        }
+        const now = moment();
+        const isExpired = moment(record.end_date).isBefore(now);
 
-        const statusColors = {
-          active: "#52c41a", // Xanh lá cây
-          inactive: "#bfbfbf", // Xám
-          expired: "#ff4d4f", // Đỏ
-        };
-
-        const statusLabels = {
-          active: "Hoạt động",
-          inactive: "Không hoạt động",
-          expired: "Hết hạn",
-        };
+        const statusLabel = isExpired
+          ? "Hết hạn"
+          : status === "active"
+          ? "Hoạt động"
+          : "Không hoạt động";
 
         return (
-          <span style={{ color: statusColors[status], fontWeight: "bold" }}>
-            {statusLabels[status] || status}
-          </span>
+          <Select
+            value={statusLabel}
+            style={{ width: 120 }}
+            onChange={(newStatus) => {
+              if (!isExpired) {
+                handleChangeStatus(
+                  record._id,
+                  newStatus === "Hoạt động" ? "active" : "inactive"
+                );
+              }
+            }}
+            options={[
+              { value: "Hoạt động", label: "Hoạt động" },
+              { value: "Không hoạt động", label: "Không hoạt động" },
+            ]}
+            disabled={isExpired}
+          />
         );
       },
+    },
+    {
+      title: "Loại Voucher",
+      dataIndex: "type",
+      key: "type",
+      render: (type) =>
+        type === "fixed" ? "Giảm giá cố định" : "Không xác định",
+    },
+    {
+      title: "Giá trị tối thiểu",
+      dataIndex: "min_order_value",
+      key: "min_order_value",
+      render: (value) =>
+        `${new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(value || 0)}`,
     },
     {
       title: "Giá trị giảm",
@@ -230,18 +294,27 @@ const VoucherList = () => {
       key: "value",
       render: (value) => `${value.toLocaleString()} VND`,
     },
+
     {
       title: "Số lượng",
       key: "quantity",
-      render: (_, record) => `${record.used_quantity}/${record.total_quantity}`,
+      render: (_, record) => {
+        const isOutOfStock = record.used_quantity >= record.total_quantity;
+        return (
+          <span style={{ color: isOutOfStock ? "red" : "inherit" }}>
+            {record.used_quantity}/{record.total_quantity}
+          </span>
+        );
+      },
     },
+
     {
       title: "Hạn sử dụng",
       key: "period",
       render: (_, record) =>
-        `${new Date(record.start_date).toLocaleDateString()} - 
-         ${new Date(record.end_date).toLocaleDateString()}`,
+        `${formatDate(record.start_date)} - ${formatDate(record.end_date)}`,
     },
+
     {
       title: "Dịch vụ áp dụng",
       key: "service_options",
@@ -266,7 +339,7 @@ const VoucherList = () => {
               <Button
                 icon={<DeleteOutlined />}
                 danger
-                onClick={() => handleDelete(record._id)}
+                onClick={() => confirmDelete(record._id)}
               />
             </>
           ) : (
@@ -286,6 +359,7 @@ const VoucherList = () => {
       onFinish={handleCreateOrUpdate}
       initialValues={{
         status: "inactive",
+        type: "fixed",
       }}
     >
       {/* Validate Tên voucher */}
@@ -298,6 +372,37 @@ const VoucherList = () => {
         ]}
       >
         <Input />
+      </Form.Item>
+
+      {/* Loại voucher */}
+      <Form.Item
+        name="type"
+        label="Loại voucher"
+        initialValue="fixed"
+        rules={[{ required: true, message: "Loại voucher là bắt buộc." }]}
+      >
+        <Input disabled value="fixed" /> {/* Không cho phép chỉnh sửa */}
+      </Form.Item>
+
+      {/* Giá trị tối thiểu */}
+      <Form.Item
+        name="min_order_value"
+        label="Giá trị tối thiểu"
+        rules={[
+          { required: true, message: "Hãy nhập giá trị tối thiểu!" },
+          {
+            type: "number",
+            min: 0,
+            message: "Giá trị tối thiểu không được âm.",
+          },
+        ]}
+      >
+        <InputNumber
+          min={0}
+          step={1000}
+          style={{ width: "100%" }}
+          placeholder="Nhập giá trị tối thiểu"
+        />
       </Form.Item>
 
       {/* Validate Mô tả */}
@@ -317,8 +422,8 @@ const VoucherList = () => {
           { required: true, message: "Giá trị giảm giá là bắt buộc." },
           {
             type: "number",
-            min: 1,
-            message: "Giá trị giảm giá phải lớn hơn 0.",
+            min: 1000,
+            message: "Giá trị giảm giá phải lớn hơn hoặc bằng 1,000 VND.",
           },
           {
             type: "number",
@@ -335,32 +440,34 @@ const VoucherList = () => {
         name="dateRange"
         label="Thời gian hiệu lực"
         rules={[
-          {
-            required: true,
-            // message: "Ngày bắt đầu và kết thúc là bắt buộc.",
-          },
-          {
-            validator: (_, value) => {
-              if (!value)
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              if (!value || !value[0] || !value[1]) {
                 return Promise.reject("Ngày bắt đầu và kết thúc là bắt buộc.");
+              }
               const [start, end] = value;
-              const now = moment();
+              const now = moment().startOf("day");
 
-              if (start <= now) {
+              // Cho phép ngày bắt đầu là hôm nay hoặc ngày tương lai
+              if (
+                (!editingVoucher ||
+                  editingVoucher.start_date !== start.toISOString()) &&
+                start.isBefore(now)
+              ) {
                 return Promise.reject(
-                  "Ngày bắt đầu phải là ngày trong tương lai."
+                  "Ngày bắt đầu phải là hôm nay hoặc ngày trong tương lai."
                 );
               }
 
-              if (start >= end) {
+              if (start.isAfter(end, "day")) {
                 return Promise.reject(
-                  "Ngày bắt đầu phải nhỏ hơn ngày kết thúc."
+                  "Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc."
                 );
               }
 
               return Promise.resolve();
             },
-          },
+          }),
         ]}
       >
         <RangePicker showTime style={{ width: "100%" }} />
@@ -384,11 +491,27 @@ const VoucherList = () => {
       </Form.Item>
 
       {/* Validate Dịch vụ áp dụng */}
-      <Form.Item name="applicable_service_options" label="Dịch vụ áp dụng">
+      <Form.Item
+        name="applicable_service_options"
+        label="Dịch vụ áp dụng"
+        rules={[
+          {
+            validator: (_, value) => {
+              if (!value || value.length === 0) {
+                return Promise.reject(
+                  "Vui lòng chọn ít nhất một dịch vụ áp dụng."
+                );
+              }
+              return Promise.resolve();
+            },
+          },
+        ]}
+      >
         <Select
           mode="multiple"
           placeholder="Chọn các dịch vụ áp dụng"
-          options={serviceOptions}
+          options={serviceOptions} // Đảm bảo options được load từ API
+          style={{ width: "100%" }}
         />
       </Form.Item>
     </Form>
@@ -429,10 +552,12 @@ const VoucherList = () => {
           style={{ width: 150 }}
           allowClear
         >
+          <Option value="">Tất cả</Option> {/* Thêm tùy chọn Tất cả */}
           <Option value="active">Hoạt động</Option>
           <Option value="inactive">Không hoạt động</Option>
           <Option value="expired">Hết hạn</Option>
         </Select>
+
         <RangePicker
           value={filters.dateRange}
           onChange={(dates) =>

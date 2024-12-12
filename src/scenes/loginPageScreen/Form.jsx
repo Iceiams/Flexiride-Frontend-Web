@@ -27,7 +27,8 @@ const loginSchema = yup.object().shape({
     .required("Mật khẩu là bắt buộc")
     .min(6, "Mật khẩu phải ít nhất 6 ký tự")
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
+      "Mật khẩu phải chứa ít nhất một chữ thường, một chữ hoa, một số và một ký tự đặc biệt"
     ),
 });
 
@@ -118,11 +119,9 @@ const LoginForm = () => {
           style={{ maxWidth: "100%", width: "100%" }}
         >
           {/* Secure Login Title */}
-          <Typography sx={titleLogin}>Secure Login</Typography>
+          <Typography sx={titleLogin}>FLEXIRIDE XIN CHÀO</Typography>
 
-          <Typography sx={titleTypographyStyles}>
-            Enter your work email
-          </Typography>
+          <Typography sx={titleTypographyStyles}>Nhập email của bạn</Typography>
 
           {/* Email Field */}
           <TextField
@@ -138,9 +137,11 @@ const LoginForm = () => {
           />
 
           {/* Password Field */}
-          <Typography sx={titleTypographyStyles}>Password</Typography>
+          <Typography sx={titleTypographyStyles}>
+            Nhập mật khẩu của bạn
+          </Typography>
           <TextField
-            label="Password"
+            label="Mật khẩu"
             type={showPassword ? "text" : "password"}
             onBlur={handleBlur}
             onChange={handleChange}
@@ -163,7 +164,7 @@ const LoginForm = () => {
 
           {/* Login Button */}
           <Button fullWidth type="submit" sx={buttonStyles}>
-            LOGIN
+            ĐĂNG NHẬP
           </Button>
 
           {/* Reset Form Action */}

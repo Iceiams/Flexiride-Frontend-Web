@@ -17,7 +17,6 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 const PendingDrivers = () => {
   const theme = useTheme();
@@ -47,8 +46,16 @@ const PendingDrivers = () => {
         setPendingDrivers(driversWithIndex);
       } catch (err) {
         console.error("Error fetching pending drivers:", err);
-        setError("Failed to load pending drivers");
-        showSnackbar("Failed to load pending drivers", "error");
+        if (err.response?.status === 401) {
+          console.error("Session expired. Please log in again."); // Log message
+          showSnackbar(
+            "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+            "warning"
+          );
+        } else {
+          setError("Lỗi hệ thống. Vui lòng thử lại sau.");
+          showSnackbar("Lỗi hệ thống. Vui lòng thử lại sau.", "error");
+        }
       } finally {
         setLoading(false);
       }
@@ -71,9 +78,13 @@ const PendingDrivers = () => {
       );
     } catch (error) {
       console.error("Error updating approval status:", error);
-
-      // Kiểm tra nếu lỗi là do không tìm thấy tài xế
-      if (error.response?.status === 404) {
+      if (error.response?.status === 401) {
+        console.error("Session expired. Please log in again.");
+        showSnackbar(
+          "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+          "warning"
+        );
+      } else if (error.response?.status === 404) {
         showSnackbar(
           "Dữ liệu không còn đồng bộ. Vui lòng làm mới danh sách.",
           "error"
@@ -96,13 +107,16 @@ const PendingDrivers = () => {
 
   // Function to show snackbar with a specific message and severity
   const showSnackbar = (message, severity) => {
+    console.log("Snackbar Called:", { message, severity });
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);
+    console.log("Snackbar Open State:", snackbarOpen);
   };
 
   // Handle Snackbar close
   const handleSnackbarClose = () => {
+    console.log("Snackbar Closed");
     setSnackbarOpen(false);
   };
 
@@ -225,9 +239,53 @@ const PendingDrivers = () => {
     );
   }
 
+  // Kiểm tra nếu danh sách `pendingDrivers` rỗng
+  if (pendingDrivers.length === 0) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+        flexDirection="column"
+      >
+        <Typography variant="h4" color="textSecondary">
+          📋 Không có hồ sơ nào đợi duyệt
+        </Typography>
+        <Typography variant="body1" color="textSecondary" mt={2}>
+          Hiện tại không có hồ sơ nào đang chờ phê duyệt. Vui lòng quay lại sau.
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box m="20px">
-      <Header title="Danh sách" subtitle="Hồ Sơ Đợi Duyệt" />
+      <Header
+        title={
+          <Box
+            sx={{
+              backgroundColor: colors.primary[500],
+              borderRadius: "10px",
+              padding: "20px",
+              textAlign: "center",
+              boxShadow: "0px 10px 20px rgba(0,0,0,0.3)",
+            }}
+          >
+            <Typography
+              variant="h4"
+              sx={{
+                color: colors.grey[100],
+                fontFamily: "'Playfair Display', sans-serif",
+                fontWeight: "bold",
+              }}
+            >
+              DANH SÁCH HỒ SƠ ĐỢI DUYỆT
+            </Typography>
+          </Box>
+        }
+      />
+
       <Box m="40px 0 0 0" height="75vh">
         <DataGrid
           rows={pendingDrivers}

@@ -68,8 +68,16 @@ const DriverReviews = () => {
 
         setDrivers(combinedData);
       } catch (error) {
-        setError("Failed to load drivers");
-        showSnackbar("Failed to load drivers", "error");
+        if (error.response && error.response.status === 401) {
+          // Session has expired, show the expired message
+          showSnackbar(
+            "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.",
+            "error"
+          );
+        } else {
+          setError("Lỗi hệ thống. Vui lòng thử lại sau.");
+          showSnackbar("Lỗi hệ thống. Vui lòng thử lại sau.", "error");
+        }
       } finally {
         setLoading(false);
       }
@@ -178,6 +186,21 @@ const DriverReviews = () => {
       >
         <Typography variant="h6" color="error">
           {error}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (drivers.length === 0) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <Typography variant="h6" color="textSecondary">
+          Không có dữ liệu để hiển thị
         </Typography>
       </Box>
     );

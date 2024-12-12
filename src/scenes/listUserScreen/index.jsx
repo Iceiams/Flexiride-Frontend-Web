@@ -63,6 +63,7 @@ const ListUsers = ({ searchQuery }) => {
     } catch (err) {
       if (err.response && err.response.status === 401) {
         setError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        console.warn("Session expired. Please log in again.");
       } else {
         console.error("Error fetching data:", err);
         setError("Không thể lấy dữ liệu");
@@ -157,11 +158,66 @@ const ListUsers = ({ searchQuery }) => {
         </Box>
       ) : error ? (
         <Typography color="error">{error}</Typography>
+      ) : data.length === 0 ? (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "60vh",
+            textAlign: "center",
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{
+              color: "#ffffff",
+              fontWeight: "bold",
+              marginBottom: "10px",
+            }}
+          >
+            Không tìm thấy người dùng
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "#a1a1a1",
+              fontSize: "18px",
+            }}
+          >
+            Vui lòng kiểm tra từ khóa tìm kiếm hoặc chọn danh mục khác.
+          </Typography>
+          <Box
+            sx={{
+              marginTop: "20px",
+            }}
+          >
+            <Button
+              variant="contained"
+              sx={{
+                backgroundColor: "#007bff",
+                color: "#ffffff",
+                padding: "10px 20px",
+                fontSize: "16px",
+                textTransform: "none",
+                "&:hover": {
+                  backgroundColor: "#0056b3",
+                },
+              }}
+              onClick={() => fetchData("", view, 0, rowsPerPage)}
+            >
+              Làm mới
+            </Button>
+          </Box>
+        </Box>
       ) : (
         <TableContainer component={Paper} sx={{ backgroundColor: "#1e2a38" }}>
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ color: "#ffffff" }}>STT</TableCell>{" "}
+                {/* Thêm cột STT */}
                 {view === "drivers" ? (
                   <>
                     <TableCell sx={{ color: "#ffffff" }}>Họ và tên</TableCell>
@@ -179,9 +235,6 @@ const ListUsers = ({ searchQuery }) => {
                     </TableCell>
                     <TableCell sx={{ color: "#ffffff" }}>
                       Loại giấy phép
-                    </TableCell>
-                    <TableCell sx={{ color: "#ffffff" }}>
-                      Tài khoản ngân hàng
                     </TableCell>
                     <TableCell sx={{ color: "#ffffff" }}>
                       Trạng thái hoạt động
@@ -202,8 +255,12 @@ const ListUsers = ({ searchQuery }) => {
             <TableBody>
               {data
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((item) => (
-                  <TableRow key={item._id}>
+                .map((item, index) => (
+                  <TableRow key={item._id || index}>
+                    {/* STT */}
+                    <TableCell sx={{ color: "#ffffff" }}>
+                      {page * rowsPerPage + index + 1}
+                    </TableCell>
                     {view === "drivers" ? (
                       <>
                         <TableCell sx={{ color: "#ffffff" }}>
@@ -232,7 +289,6 @@ const ListUsers = ({ searchQuery }) => {
                             sx={{ width: 50, height: 50 }}
                           />
                         </TableCell>
-
                         <TableCell>
                           <Button
                             variant="contained"
@@ -242,14 +298,23 @@ const ListUsers = ({ searchQuery }) => {
                             Chi tiết
                           </Button>
                         </TableCell>
-
-                        <TableCell sx={{ color: "#ffffff" }}>
-                          {item.bankAccount.accountHolderName} <br />
-                          {item.bankAccount.accountNumber} <br />
-                          {item.bankAccount.bankName}
-                        </TableCell>
-                        <TableCell sx={{ color: "#ffffff" }}>
-                          {item.status || "Không xác định"}
+                        {/* Trạng thái hoạt động */}
+                        <TableCell
+                          sx={{
+                            color:
+                              item.status === "online"
+                                ? "#4CAF50"
+                                : item.status === "offline"
+                                ? "#F44336"
+                                : "#9E9E9E", // Màu xám nếu không xác định
+                            fontWeight: "light",
+                          }}
+                        >
+                          {item.status === "online"
+                            ? "Online"
+                            : item.status === "offline"
+                            ? "Offline"
+                            : "Không xác định"}
                         </TableCell>
                       </>
                     ) : (
@@ -272,7 +337,6 @@ const ListUsers = ({ searchQuery }) => {
                 ))}
             </TableBody>
           </Table>
-          {/* Phân trang */}
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
@@ -283,141 +347,6 @@ const ListUsers = ({ searchQuery }) => {
             onRowsPerPageChange={handleChangeRowsPerPage}
             sx={{ color: "#ffffff", backgroundColor: "#1e2a38" }}
           />
-          <Dialog
-            open={openDetail}
-            onClose={handleCloseDetail}
-            maxWidth="md"
-            fullWidth
-          >
-            <DialogTitle>Chi tiết giấy phép</DialogTitle>
-            <DialogContent dividers>
-              {selectedDocument && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {/* Passport Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Hộ chiếu
-                    </Typography>
-                    <Typography>
-                      Ngày cấp: {selectedDocument.passport.issueDate}
-                    </Typography>
-                    <Typography>
-                      Nơi cấp: {selectedDocument.passport.issuePlace}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.passport.frontImage}
-                        alt="Passport Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.passport.backImage}
-                        alt="Passport Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                    </Box>
-                  </Box>
-
-                  {/* Driver License Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Bằng lái xe
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.driverLicense.frontImage}
-                        alt="Driver License Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.driverLicense.backImage}
-                        alt="Driver License Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                    </Box>
-                  </Box>
-
-                  {/* Criminal Record Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Lý lịch tư pháp
-                    </Typography>
-                    <Typography>
-                      Ngày cấp: {selectedDocument.criminalRecord.issueDate}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.criminalRecord.frontImage}
-                        alt="Criminal Record Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.criminalRecord.backImage}
-                        alt="Criminal Record Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                    </Box>
-                  </Box>
-
-                  {/* Vehicle Registration Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Đăng ký phương tiện
-                    </Typography>
-                    <Typography>
-                      Biển số:{" "}
-                      {selectedDocument.vehicleRegistration.licensePlate}
-                    </Typography>
-                    <Typography>
-                      Loại nhiên liệu:{" "}
-                      {selectedDocument.vehicleRegistration.fuelType}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.vehicleRegistration.frontImage}
-                        alt="Vehicle Registration Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.vehicleRegistration.backImage}
-                        alt="Vehicle Registration Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                    </Box>
-                  </Box>
-
-                  {/* Vehicle Insurance Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Bảo hiểm xe
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.vehicleInsurance.frontImage}
-                        alt="Vehicle Insurance Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.vehicleInsurance.backImage}
-                        alt="Vehicle Insurance Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-              )}
-            </DialogContent>
-          </Dialog>
         </TableContainer>
       )}
     </Box>

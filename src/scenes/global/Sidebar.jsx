@@ -41,8 +41,9 @@ const Sidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selected, setSelected] = useState("Dashboard");
-  const { admin, token } = useAuth();
+  const [selected, setSelected] = useState("Trang chính");
+  const { admin } = useAuth();
+
   return (
     <Box
       sx={{
@@ -62,7 +63,7 @@ const Sidebar = () => {
           color: "#6870fa !important",
         },
         "& .pro-menu": {
-          paddingBottom: "150px !important", // Increased bottom padding significantly
+          paddingBottom: "150px !important",
         },
       }}
     >
@@ -123,7 +124,7 @@ const Sidebar = () => {
 
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
-              title="Dashboard"
+              title="Trang chính"
               to="/"
               icon={<HomeOutlinedIcon />}
               selected={selected}
@@ -135,31 +136,31 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Data
+              Quản Lý Dữ Liệu
             </Typography>
             <Item
-              title="Thông tin người dùng"
+              title="Thông Tin Người Dùng"
               to="/listUsers"
               icon={<PeopleOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Hồ sơ đợi duyệt"
+              title="Hồ Sơ Đợi Duyệt"
               to="/pendingDrivers"
               icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Xử lý yêu cầu rút tiền"
+              title="Yêu Cầu Rút Tiền"
               to="/pendingWithdrawRequests"
               icon={<RequestPageSharp />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Tài khoản bị khóa"
+              title="Tài Khoản Bị Khóa"
               to="/listLockedUsers"
               icon={<LockOpen />}
               selected={selected}
@@ -167,7 +168,7 @@ const Sidebar = () => {
             />
 
             <Item
-              title="Đánh giá tài xế"
+              title="Đánh Giá Tài Xế"
               to="/getAllDriversWithReviews"
               icon={<ReviewsOutlined />}
               selected={selected}
@@ -175,9 +176,16 @@ const Sidebar = () => {
             />
 
             <Item
-              title="Quản lý giá dịch vụ"
+              title="Quản Lý Giá Dịch Vụ"
               to="/priceService"
               icon={<PriceChange />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Quản Lý Mã Khuyến Mãi"
+              to="/voucher"
+              icon={<DiscountOutlined />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -187,31 +195,17 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Theo Dõi Thống Kê
+              Thống Kê
             </Typography>
             <Item
-              title="Tổng Chuyến Đi"
+              title="Thống Kê Chuyến Đi"
               to="/bar"
               icon={<BarChartOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
-            {/* <Item
-              title="Trạng Thái Chuyến Đi"
-              to="/pie"
-              icon={<PieChartOutlineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
             <Item
-              title="Chương trình Voucher"
-              to="/voucher"
-              icon={<DiscountOutlined />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Thống kê doanh thu"
+              title="Thống Kê Doanh Thu"
               to="/line"
               icon={<TimelineOutlinedIcon />}
               selected={selected}
