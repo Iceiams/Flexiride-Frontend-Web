@@ -7,11 +7,6 @@ import {
   ButtonGroup,
   Snackbar,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  DialogActions,
 } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
@@ -298,7 +293,6 @@ const PendingWithdrawRequests = () => {
         />
       </Box>
 
-      {/* Snackbar for success and error messages */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
