@@ -10,7 +10,10 @@ import {
   ListItemText,
   Divider,
   Popover,
+  Menu,
+  MenuItem,
 } from "@mui/material";
+
 import { useContext, useState, useEffect } from "react";
 import { ColorModeContext, tokens } from "../../theme";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
@@ -23,7 +26,7 @@ import { useAuth } from "../../AuthContext";
 import io from "socket.io-client";
 import api from "../../api/axiosConfig";
 
-const socket = io("http://localhost:3000");
+const socket = io("https://flexiride.onrender.com");
 
 const Topbar = () => {
   const theme = useTheme();
@@ -34,13 +37,48 @@ const Topbar = () => {
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+
+  // Separate state for different menus/popovers
+  const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
+
+  // Separate open states
+  const isNotificationsOpen = Boolean(notificationsAnchorEl);
+  const isUserMenuOpen = Boolean(userMenuAnchorEl);
 
   const sortedNotifications = [...notifications].sort((a, b) => {
     // Đưa thông báo chưa đọc (isRead: false) lên trước
     return a.isRead - b.isRead;
   });
+
+  const handleLogout = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.error("No token found. Please log in again.");
+      return; // Dừng hàm nếu không có token
+    }
+
+    axios
+      .get("https://flexiride.onrender.com/auth/logout", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log("Logged out successfully:", response.data);
+        localStorage.removeItem("token"); // Xóa token
+        logout();
+        navigate("/loginAdmin");
+      })
+      .catch((error) => {
+        console.error(
+          "Error:",
+          error.response ? error.response.data : error.message
+        );
+      });
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -71,7 +109,7 @@ const Topbar = () => {
   }, []);
 
   const handleNotificationOpen = async (event) => {
-    setAnchorEl(event.currentTarget); // Mở danh sách thông báo
+    setNotificationsAnchorEl(event.currentTarget);
     setUnreadCount(0); // Reset số thông báo chưa đọc
 
     // Đánh dấu tất cả thông báo là đã đọc
@@ -86,7 +124,7 @@ const Topbar = () => {
   };
 
   const handleNotificationClose = () => {
-    setAnchorEl(null); // Đóng danh sách thông báo
+    setNotificationsAnchorEl(null); // Đóng danh sách thông báo
   };
 
   const handleNotificationClick = async (notification) => {
@@ -108,8 +146,16 @@ const Topbar = () => {
         console.error("Error updating notification status:", error);
       }
 
-      setAnchorEl(null); // Đóng danh sách thông báo
+      setNotificationsAnchorEl(null); // Đóng danh sách thông báo
     }
+  };
+
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchorEl(null);
   };
 
   return (
@@ -128,17 +174,27 @@ const Topbar = () => {
           </Badge>
         </IconButton>
 
-        <IconButton>
-          <SettingsOutlinedIcon />
-        </IconButton>
-        <IconButton>
+        <IconButton onClick={handleUserMenuOpen}>
           <PersonOutlinedIcon />
         </IconButton>
       </Box>
 
+      {/* Separate Menu for User Actions */}
+      <Menu
+        anchorEl={userMenuAnchorEl}
+        open={isUserMenuOpen}
+        onClose={handleUserMenuClose}
+        MenuListProps={{
+          "aria-labelledby": "basic-button",
+        }}
+      >
+        <MenuItem onClick={handleLogout}>Logout</MenuItem>
+      </Menu>
+
+      {/* Notifications Popover */}
       <Popover
-        open={Boolean(anchorEl)}
-        anchorEl={anchorEl}
+        open={isNotificationsOpen}
+        anchorEl={notificationsAnchorEl}
         onClose={handleNotificationClose}
         anchorOrigin={{
           vertical: "bottom",

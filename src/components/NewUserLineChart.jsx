@@ -9,15 +9,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import api from "../api/axiosConfig";
+import axios from "axios";
 
 const NewUserLineChart = () => {
   const [chartData, setChartData] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Gọi API để lấy dữ liệu
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/getCustomerRegistrationsLastMonth");
+        const response = await api.get("/getServiceUsageTrends");
         const { data } = response.data;
 
         // Định dạng dữ liệu cho Recharts
@@ -28,17 +30,39 @@ const NewUserLineChart = () => {
 
         setChartData(formattedData);
       } catch (error) {
-        console.error("Error fetching customer registration data:", error);
+        console.error("Error fetching service usage data:", error);
+        if (error.response) {
+          setErrorMessage(
+            `Lỗi từ server: ${error.response.status} - ${
+              error.response.data.error || "Không xác định"
+            }`
+          );
+        } else if (error.request) {
+          setErrorMessage("Không thể kết nối đến server. Vui lòng thử lại.");
+        } else {
+          setErrorMessage(`Đã xảy ra lỗi: ${error.message}`);
+        }
       }
     };
 
     fetchData();
   }, []);
 
-  if (chartData.length === 0) {
-    return <div>Loading...</div>;
+  // Hiển thị khi có lỗi
+  if (errorMessage) {
+    return (
+      <div style={{ color: "red", textAlign: "center" }}>{errorMessage}</div>
+    );
   }
 
+  // Hiển thị khi không có dữ liệu
+  if (chartData.length === 0) {
+    return (
+      <div style={{ textAlign: "center", color: "#9CA3AF" }}>
+        Không có dữ liệu để hiển thị.
+      </div>
+    );
+  }
   // Custom Tooltip Component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -54,7 +78,7 @@ const NewUserLineChart = () => {
         >
           <p style={{ margin: 0, fontWeight: "bold" }}>Ngày: {label}</p>
           <p style={{ margin: 0, color: "#3b82f6" }}>
-            Số Lượng: {payload[0].value}
+            Người sử dụng: {payload[0].value}
           </p>
         </div>
       );

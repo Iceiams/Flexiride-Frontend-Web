@@ -40,19 +40,16 @@ const typographyStyles = {
 
 const textFieldStyles = {
   "& .MuiInputBase-input": {
-    color: "#333", // Màu chữ cho input
+    color: "#000", // Màu chữ là đen (để dễ đọc trên nền trắng)
   },
   "& .MuiFormLabel-root": {
-    color: "#333", // Màu chữ cho nhãn (label)
+    color: "#3d3d3d", // Màu nhãn mặc định
   },
-  "& .MuiFormHelperText-root": {
-    color: "#d32f2f", // Màu chữ cho thông báo lỗi
-    fontSize: "14px",
-  },
-  fontSize: "1.1rem", // Kích thước chữ cho input
   "& .MuiOutlinedInput-root": {
+    backgroundColor: "#fff", // Nền màu trắng
+    borderRadius: "4px", // Bo góc khung input
     "& fieldset": {
-      borderColor: "#1976d2", // Màu viền khi chưa hover hoặc focus
+      borderColor: "#d9d9d9", // Màu viền mặc định (xám nhạt)
     },
     "&:hover fieldset": {
       borderColor: "#2BC169", // Màu viền khi hover
@@ -61,6 +58,14 @@ const textFieldStyles = {
       borderColor: "#2BC169", // Màu viền khi focus
     },
   },
+  "& .MuiFormHelperText-root": {
+    color: "#d32f2f", // Màu thông báo lỗi
+    fontSize: "14px",
+  },
+};
+
+const passwordIconStyles = {
+  color: "#fff", // Màu trắng cho icon
 };
 
 export {

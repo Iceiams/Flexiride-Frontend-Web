@@ -13,7 +13,7 @@ const PieChart = () => {
     const fetchData = async () => {
       try {
         const response = await api.get(
-          "http://localhost:3000/admin/totalRevenue"
+          "https://flexiride.onrender.com/admin/totalRevenue"
         );
         const { systemRevenue, driverIncome } = response.data;
 

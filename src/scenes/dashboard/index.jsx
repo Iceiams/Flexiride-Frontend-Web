@@ -14,11 +14,14 @@ import api from "../../api/axiosConfig";
 import React, { useEffect, useState } from "react";
 import PieChart from "../../components/PieChart";
 import NewUserLineChart from "../../components/NewUserLineChart";
+import { useNavigate } from "react-router-dom";
+import ArrowForwardTwoToneIcon from "@mui/icons-material/ArrowForwardTwoTone";
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { admin } = useAuth();
+  const navigate = useNavigate();
   console.log();
   const [onlineDrivers, setOnlineDrivers] = useState(0);
   const [totalDrivers, setTotalDrivers] = useState(0);
@@ -307,13 +310,30 @@ const Dashboard = () => {
           display="flex"
           flexDirection="column"
         >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ marginBottom: "15px" }}
+          {/* Tiêu đề và mũi tên */}
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center" // Đảm bảo icon nằm cùng chiều cao với chữ
+            mb="15px"
           >
-            Xu Hướng Đăng Ký Người Dùng Mới Trong 30 Ngày Qua
-          </Typography>
+            <Typography variant="h5" fontWeight="600" color="#ABDBE3">
+              Xu hướng người dùng sử dụng dịch vụ 30 ngày qua
+            </Typography>
+            <IconButton
+              onClick={() => navigate("/bar")}
+              sx={{
+                color: "#ABDBE3",
+                "&:hover": {
+                  backgroundColor: "transparent",
+                  transform: "scale(1.1)",
+                },
+              }}
+            >
+              <ArrowForwardTwoToneIcon fontSize="large" />
+            </IconButton>
+          </Box>
+
           <Box height="100%" flexGrow={1}>
             <NewUserLineChart />
           </Box>
