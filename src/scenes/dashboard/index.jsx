@@ -12,6 +12,8 @@ import ProgressCircle from "../../components/ProgressCircle";
 import { useAuth } from "../../AuthContext";
 import api from "../../api/axiosConfig";
 import React, { useEffect, useState } from "react";
+import PieChart from "../../components/PieChart";
+import NewUserLineChart from "../../components/NewUserLineChart";
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -65,7 +67,7 @@ const Dashboard = () => {
     <Box m="20px">
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="DASHBOARD" subtitle="Welcome to FRide dashboard" />
+        <Header title="DASHBOARD" subtitle="Xin Chào Admin FRide!" />
 
         {/* <Box>
           <Button
@@ -100,7 +102,7 @@ const Dashboard = () => {
         >
           <StatBox
             title={onlineDrivers}
-            subtitle="Tài xế hoạt động"
+            subtitle="Tài Xế Đang Hoạt Động"
             progress={onlinePercentage}
             increase={totalDrivers}
             icon={
@@ -119,7 +121,7 @@ const Dashboard = () => {
         >
           <StatBox
             title={completedTrips.traditional}
-            subtitle="Completed Booking"
+            subtitle="Dịch Vụ Đặt Xe"
             progress={
               completedTrips.traditional /
               (completedTrips.traditional +
@@ -150,7 +152,7 @@ const Dashboard = () => {
         >
           <StatBox
             title={completedTrips.carpool}
-            subtitle="Completed Carpool"
+            subtitle="Dịch Vụ Xe Ghép"
             progress={
               completedTrips.carpool /
               (completedTrips.traditional +
@@ -180,7 +182,7 @@ const Dashboard = () => {
         >
           <StatBox
             title={completedTrips.hireDriver}
-            subtitle="Completed Hire Driver"
+            subtitle="Dịch Vụ Thuê Tài Xế"
             progress={
               completedTrips.hireDriver /
               (completedTrips.traditional +
@@ -205,44 +207,20 @@ const Dashboard = () => {
         {/* ROW 2 */}
         <Box
           gridColumn="span 8"
-          gridRow="span 2"
+          gridRow="span 4"
           backgroundColor={colors.primary[400]}
+          padding="30px"
         >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex "
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.grey[100]}
-              >
-                Revenue Generated
-              </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-              >
-                $59,342.32
-              </Typography>
-            </Box>
-            <Box>
-              <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-              </IconButton>
-            </Box>
-          </Box>
-          <Box height="250px" m="-20px 0 0 0">
-            {/* <LineChart isDashboard={true} /> */}
+          <Typography
+            variant="h5"
+            fontWeight="600"
+            sx={{ marginBottom: "15px" }}
+          ></Typography>
+          <Box height="500px">
+            <PieChart />
           </Box>
         </Box>
+
         <Box
           gridColumn="span 4"
           gridRow="span 2"
@@ -322,34 +300,23 @@ const Dashboard = () => {
           </Box>
         </Box>
         <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ padding: "30px 30px 0 30px" }}
-          >
-            Sales Quantity
-          </Typography>
-          <Box height="250px" mt="-20px">
-            {/* <BarChart isDashboard={true} /> */}
-          </Box>
-        </Box>
-        <Box
-          gridColumn="span 4"
+          gridColumn="span 12"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           padding="30px"
+          display="flex"
+          flexDirection="column"
         >
           <Typography
             variant="h5"
             fontWeight="600"
             sx={{ marginBottom: "15px" }}
           >
-            Geography Based Traffic
+            Xu Hướng Đăng Ký Người Dùng Mới Trong 30 Ngày Qua
           </Typography>
+          <Box height="100%" flexGrow={1}>
+            <NewUserLineChart />
+          </Box>
         </Box>
       </Box>
     </Box>
