@@ -148,7 +148,7 @@ const PriceForm = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/admin/viewPriceServices")
+      .get("https://flexiride.onrender.com/admin/viewPriceServices")
       .then((response) => {
         setServiceOptions(response.data);
         if (response.data.length > 0) {
@@ -218,7 +218,7 @@ const PriceForm = () => {
       });
 
       const response = await axios.put(
-        `http://localhost:3000/admin/update-price/${serviceId}`,
+        `https://flexiride.onrender.com/admin/update-price/${serviceId}`,
         { pricingAttributes: updatedPricingAttributes }
       );
 

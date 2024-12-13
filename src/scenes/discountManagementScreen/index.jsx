@@ -43,7 +43,7 @@ const VoucherList = () => {
   const fetchServiceOptions = async () => {
     try {
       const { data } = await api.get(
-        "http://localhost:3000/service-option/getAllServicesWithOptions"
+        "https://flexiride.onrender.com/service-option/getAllServicesWithOptions"
       );
       if (data.success) {
         const formattedOptions = data.data.flatMap((service) =>

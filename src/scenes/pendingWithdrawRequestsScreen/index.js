@@ -31,7 +31,7 @@ const PendingWithdrawRequests = () => {
   const fetchPendingWithdrawals = async () => {
     try {
       const response = await api.get(
-        "http://localhost:3000/driver/wallet/withdraw-requests/pending"
+        "https://flexiride.onrender.com/driver/wallet/withdraw-requests/pending"
       );
       setWithdrawRequests(
         response.data.pendingWithdrawals.map((req, index) => ({
@@ -55,7 +55,7 @@ const PendingWithdrawRequests = () => {
   const processApproveRequest = async (transactionId) => {
     try {
       const response = await api.post(
-        "http://localhost:3000/driver/wallet/withdraw-request/approve",
+        "https://flexiride.onrender.com/driver/wallet/withdraw-request/approve",
         { transactionId }
       );
       if (response.data.success) {
@@ -82,7 +82,7 @@ const PendingWithdrawRequests = () => {
   const processCompleteRequest = async (transactionId) => {
     try {
       const response = await api.post(
-        "http://localhost:3000/driver/wallet/withdraw-request/complete",
+        "https://flexiride.onrender.com/driver/wallet/withdraw-request/complete",
         { transactionId }
       );
       if (response.data.success) {

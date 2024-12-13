@@ -62,7 +62,7 @@ const LoginForm = () => {
   const handleLogin = async (values, setFieldError) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/auth/loginAdmin",
+        "https://flexiride.onrender.com/auth/loginAdmin",
         values
       );
       const loggedIn = response.data;
@@ -140,6 +140,7 @@ const LoginForm = () => {
           <Typography sx={titleTypographyStyles}>
             Nhập mật khẩu của bạn
           </Typography>
+          {/* Password Field */}
           <TextField
             label="Mật khẩu"
             type={showPassword ? "text" : "password"}
@@ -154,8 +155,14 @@ const LoginForm = () => {
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={togglePasswordVisibility} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  <IconButton
+                    onClick={togglePasswordVisibility}
+                    edge="end"
+                    sx={{
+                      color: "#3d3d3d", // Icon màu đen xám để phù hợp với nền trắng
+                    }}
+                  >
+                    {showPassword ? <Visibility /> : <VisibilityOff />}
                   </IconButton>
                 </InputAdornment>
               ),
