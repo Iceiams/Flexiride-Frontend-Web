@@ -112,20 +112,6 @@ const PendingWithdrawRequests = () => {
     setSnackbarOpen(false);
   };
 
-  const handleOpenRejectDialog = () => {
-    setOpenRejectDialog(true);
-  };
-
-  const handleCloseRejectDialog = () => {
-    setOpenRejectDialog(false);
-    setRejectReason("");
-  };
-
-  const handleReject = (transactionId) => {
-    processWithdrawRequest(transactionId, false, rejectReason);
-    handleCloseRejectDialog();
-  };
-
   const columns = [
     {
       field: "index",
