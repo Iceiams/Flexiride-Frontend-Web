@@ -60,20 +60,23 @@ const RevenueOverview = () => {
 
   const fetchRevenue = async () => {
     try {
-      const today = await axios.get(
-        "http://localhost:3000/admin/getTotalRevenueByPeriod",
+      const today = await api.get(
+        // "http://localhost:3000/admin/getTotalRevenueByPeriod",
+        // "/getTotalRevenueByPeriod",
         {
           params: { filterType: "today" },
         }
       );
-      const week = await axios.get(
-        "http://localhost:3000/admin/getTotalRevenueByPeriod",
+      const week = await api.get(
+        // "http://localhost:3000/admin/getTotalRevenueByPeriod",
+        "/getTotalRevenueByPeriod",
         {
           params: { filterType: "week" },
         }
       );
-      const month = await axios.get(
-        "http://localhost:3000/admin/getTotalRevenueByPeriod",
+      const month = await api.get(
+        // "http://localhost:3000/admin/getTotalRevenueByPeriod",
+        "/getTotalRevenueByPeriod",
         {
           params: { filterType: "month" },
         }
