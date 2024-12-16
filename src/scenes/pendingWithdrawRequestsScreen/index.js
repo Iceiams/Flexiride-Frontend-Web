@@ -162,13 +162,6 @@ const PendingWithdrawRequests = () => {
           currencyDisplay: "code", // Thêm dòng này để hiển thị VND thay vì đ
         }).format(params.value),
     },
-    // {
-    //   field: "amount",
-    //   headerName: "Số tiền",
-    //   flex: 1,
-    //   renderCell: (params) =>
-    //     new Intl.NumberFormat("vi-VN").format(params.value), // Chỉ định dạng số
-    // },
 
     {
       field: "createdAt",
@@ -197,8 +190,8 @@ const PendingWithdrawRequests = () => {
           {params.row.status === "PENDING" && (
             <Button
               style={{
-                backgroundColor: "#2E8B57", // Màu xanh
-                color: "#FFFFFF", // Màu chữ trắng
+                backgroundColor: "#2E8B57",
+                color: "#FFFFFF",
               }}
               onClick={() => processApproveRequest(params.row._id)}
             >

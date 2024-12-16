@@ -159,7 +159,7 @@ const LoginForm = () => {
                     onClick={togglePasswordVisibility}
                     edge="end"
                     sx={{
-                      color: "#3d3d3d", // Icon màu đen xám để phù hợp với nền trắng
+                      color: "#3d3d3d",
                     }}
                   >
                     {showPassword ? <Visibility /> : <VisibilityOff />}
@@ -174,14 +174,11 @@ const LoginForm = () => {
             ĐĂNG NHẬP
           </Button>
 
-          {/* Reset Form Action */}
           <Typography
             onClick={() => resetForm()}
             sx={typographyStyles}
             mt="1rem"
-          >
-            {/* Don't have an account? Sign Up here. */}
-          </Typography>
+          ></Typography>
         </form>
       )}
     </Formik>
