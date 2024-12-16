@@ -62,7 +62,7 @@ const RevenueOverview = () => {
     try {
       const today = await api.get(
         // "http://localhost:3000/admin/getTotalRevenueByPeriod",
-        // "/getTotalRevenueByPeriod",
+        "/getTotalRevenueByPeriod",
         {
           params: { filterType: "today" },
         }
