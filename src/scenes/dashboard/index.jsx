@@ -16,6 +16,7 @@ import PieChart from "../../components/PieChart";
 import NewUserLineChart from "../../components/NewUserLineChart";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardTwoToneIcon from "@mui/icons-material/ArrowForwardTwoTone";
+import RecentTransactions from "../../scenes/revenueStatBox/RevenueStatBox";
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -31,7 +32,7 @@ const Dashboard = () => {
     carpool: 0,
     hireDriver: 0,
   });
-  // Hàm gọi API để lấy số tài xế online, tổng tài xế, và tỷ lệ phần trăm
+
   const fetchOnlineDrivers = async () => {
     try {
       const response = await api.get("/countDriversOnline");
@@ -60,32 +61,27 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchCompletedTrips();
-  }, []); // Fetch data when the component mounts
+  }, []);
 
   useEffect(() => {
     fetchOnlineDrivers();
-  }, []); // Gọi API khi component được render lần đầu
+  }, []);
 
   return (
-    <Box m="20px">
+    <Box
+      m="20px"
+      sx={{
+        overflowY: "hidden", // Ẩn thanh cuộn dọc
+        scrollbarWidth: "none", // Cho Firefox
+        msOverflowStyle: "none", // Cho IE và Edge
+        "&::-webkit-scrollbar": {
+          display: "none", // Cho Chrome, Safari và Opera
+        },
+      }}
+    >
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Xin Chào Admin FRide!" />
-
-        {/* <Box>
-          <Button
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-            }}
-          >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-            Download Reports
-          </Button>
-        </Box> */}
       </Box>
 
       {/* GRID & CHARTS */}
@@ -94,6 +90,14 @@ const Dashboard = () => {
         gridTemplateColumns="repeat(12, 1fr)"
         gridAutoRows="140px"
         gap="20px"
+        sx={{
+          overflowY: "hidden", // Ẩn thanh cuộn dọc
+          scrollbarWidth: "none", // Cho Firefox
+          msOverflowStyle: "none", // Cho IE và Edge
+          "&::-webkit-scrollbar": {
+            display: "none", // Cho Chrome, Safari và Opera
+          },
+        }}
       >
         {/* ROW 1 */}
         <Box
@@ -219,89 +223,47 @@ const Dashboard = () => {
             fontWeight="600"
             sx={{ marginBottom: "15px" }}
           ></Typography>
-          <Box height="500px">
+          <Box
+            height="500px"
+            sx={{
+              overflowY: "hidden", // Ẩn thanh cuộn dọc
+              scrollbarWidth: "none", // Cho Firefox
+              msOverflowStyle: "none", // Cho IE và Edge
+              "&::-webkit-scrollbar": {
+                display: "none", // Cho Chrome, Safari và Opera
+              },
+            }}
+          >
             <PieChart />
           </Box>
         </Box>
-
         <Box
           gridColumn="span 4"
-          gridRow="span 2"
+          gridRow="span 4"
           backgroundColor={colors.primary[400]}
-          overflow="auto"
+          p="15px"
+          sx={{
+            overflowY: "hidden", // Ẩn thanh cuộn dọc
+            scrollbarWidth: "none", // Cho Firefox
+            msOverflowStyle: "none", // Cho IE và Edge
+            "&::-webkit-scrollbar": {
+              display: "none", // Cho Chrome, Safari và Opera
+            },
+          }}
         >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
-          >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
-            </Typography>
-          </Box>
-          {/* {mockTransactions.map((transaction, i) => (
-            <Box
-              key={`${transaction.txId}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${colors.primary[500]}`}
-              p="15px"
-            >
-              <Box>
-                <Typography
-                  color={colors.greenAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {transaction.txId}
-                </Typography>
-                <Typography color={colors.grey[100]}>
-                  {transaction.user}
-                </Typography>
-              </Box>
-              <Box color={colors.grey[100]}>{transaction.date}</Box>
-              <Box
-                backgroundColor={colors.greenAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                ${transaction.cost}
-              </Box>
-            </Box>
-          ))} */}
+          {/* Tiêu đề Recent Transactions nằm trên */}
+          <Typography
+            color={colors.grey[100]}
+            variant="h5"
+            fontWeight="600"
+            mb="10px"
+            textAlign="center"
+          ></Typography>
+
+          {/* Component Recent Transactions */}
+          <RecentTransactions />
         </Box>
 
-        {/* ROW 3 */}
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          p="30px"
-        >
-          <Typography variant="h5" fontWeight="600">
-            Campaign
-          </Typography>
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            mt="25px"
-          >
-            <ProgressCircle size="125" />
-            <Typography
-              variant="h5"
-              color={colors.greenAccent[500]}
-              sx={{ mt: "15px" }}
-            >
-              $48,352 revenue generated
-            </Typography>
-            <Typography>Includes extra misc expenditures and costs</Typography>
-          </Box>
-        </Box>
         <Box
           gridColumn="span 12"
           gridRow="span 2"
@@ -314,7 +276,7 @@ const Dashboard = () => {
           <Box
             display="flex"
             justifyContent="space-between"
-            alignItems="center" // Đảm bảo icon nằm cùng chiều cao với chữ
+            alignItems="center"
             mb="15px"
           >
             <Typography variant="h5" fontWeight="600" color="#ABDBE3">
@@ -334,7 +296,18 @@ const Dashboard = () => {
             </IconButton>
           </Box>
 
-          <Box height="100%" flexGrow={1}>
+          <Box
+            height="100%"
+            flexGrow={1}
+            sx={{
+              overflowY: "hidden", // Ẩn thanh cuộn dọc
+              scrollbarWidth: "none", // Cho Firefox
+              msOverflowStyle: "none", // Cho IE và Edge
+              "&::-webkit-scrollbar": {
+                display: "none", // Cho Chrome, Safari và Opera
+              },
+            }}
+          >
             <NewUserLineChart />
           </Box>
         </Box>

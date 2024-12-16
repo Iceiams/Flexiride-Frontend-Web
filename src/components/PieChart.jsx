@@ -14,6 +14,7 @@ const PieChart = () => {
       try {
         const response = await api.get(
           "https://flexiride.onrender.com/admin/totalRevenue"
+          // "http://localhost:3000/admin/totalRevenue"
         );
         const { systemRevenue, driverIncome } = response.data;
 
