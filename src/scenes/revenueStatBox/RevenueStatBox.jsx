@@ -63,10 +63,10 @@ const RevenueOverview = () => {
       const today = await api.get("/getTotalRevenueByPeriod", {
         params: { filterType: "today" },
       });
-      const week = await axios.get("/getTotalRevenueByPeriod", {
+      const week = await api.get("/getTotalRevenueByPeriod", {
         params: { filterType: "week" },
       });
-      const month = await axios.get("/getTotalRevenueByPeriod", {
+      const month = await api.get("/getTotalRevenueByPeriod", {
         params: { filterType: "month" },
       });
 
