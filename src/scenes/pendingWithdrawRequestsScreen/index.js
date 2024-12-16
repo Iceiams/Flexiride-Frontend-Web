@@ -26,8 +26,6 @@ const PendingWithdrawRequests = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  const [openRejectDialog, setOpenRejectDialog] = useState(false);
-
   const fetchPendingWithdrawals = async () => {
     try {
       const response = await api.get(
@@ -110,11 +108,6 @@ const PendingWithdrawRequests = () => {
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
-  };
-
-  const handleCloseRejectDialog = () => {
-    setOpenRejectDialog(false);
-    setRejectReason("");
   };
 
   const columns = [
