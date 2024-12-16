@@ -60,15 +60,27 @@ const RevenueOverview = () => {
 
   const fetchRevenue = async () => {
     try {
-      const today = await api.get("/getTotalRevenueByPeriod", {
-        params: { filterType: "today" },
-      });
-      const week = await api.get("/getTotalRevenueByPeriod", {
-        params: { filterType: "week" },
-      });
-      const month = await api.get("/getTotalRevenueByPeriod", {
-        params: { filterType: "month" },
-      });
+      const today = await api.get(
+        // "http://localhost:3000/admin/getTotalRevenueByPeriod",
+        // "/getTotalRevenueByPeriod",
+        {
+          params: { filterType: "today" },
+        }
+      );
+      const week = await api.get(
+        // "http://localhost:3000/admin/getTotalRevenueByPeriod",
+        "/getTotalRevenueByPeriod",
+        {
+          params: { filterType: "week" },
+        }
+      );
+      const month = await api.get(
+        // "http://localhost:3000/admin/getTotalRevenueByPeriod",
+        "/getTotalRevenueByPeriod",
+        {
+          params: { filterType: "month" },
+        }
+      );
 
       setTodayRevenue(today.data.data.systemRevenue);
       setWeekRevenue(week.data.data.systemRevenue);
