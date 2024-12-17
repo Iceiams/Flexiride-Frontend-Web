@@ -118,7 +118,7 @@ const RevenueOverview = () => {
             letterSpacing: "1px",
           }}
         >
-          THEO DÕI DOANH THU
+          DOANH THU HỆ THỐNG
         </Typography>
       </Box>
 

@@ -119,32 +119,60 @@ const ListUsers = ({ searchQuery }) => {
         minHeight: "100vh",
       }}
     >
-      <Typography variant="h4" sx={{ marginBottom: "20px" }}>
-        Thông tin tài xế và khách hàng
+      <Typography
+        variant="h4"
+        sx={{
+          backgroundColor: "#0A1929", // Màu tối giống "Hồ Sơ Đợi Duyệt"
+          borderRadius: "10px",
+          padding: "14px",
+          textAlign: "center",
+          boxShadow: "0px 10px 20px rgba(0,0,0,0.3)",
+          color: "#ffffff",
+          fontFamily: "'Playfair Display', sans-serif",
+          fontWeight: "bold",
+        }}
+      >
+        THÔNG TIN TÀI XẾ VÀ KHÁCH HÀNG
       </Typography>
-      <Topbar onSearch={handleSearch} view={view} />
-      <Box sx={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <Button
-          variant={view === "drivers" ? "contained" : "outlined"}
-          onClick={() => handleViewChange("drivers")}
-          sx={{
-            backgroundColor: view === "drivers" ? "#007bff" : "transparent",
-            color: "#ffffff",
-          }}
-        >
-          Hiển thị Tài xế
-        </Button>
-        <Button
-          variant={view === "customers" ? "contained" : "outlined"}
-          onClick={() => handleViewChange("customers")}
-          sx={{
-            backgroundColor: view === "customers" ? "#007bff" : "transparent",
-            color: "#ffffff",
-          }}
-        >
-          Hiển thị Khách hàng
-        </Button>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between", // Các phần tử cách nhau
+          alignItems: "center",
+          marginBottom: "20px",
+          marginTop: "40px",
+        }}
+      >
+        {/* Phần nút chuyển đổi */}
+        <Box sx={{ display: "flex", gap: "10px" }}>
+          <Button
+            variant={view === "drivers" ? "contained" : "outlined"}
+            onClick={() => handleViewChange("drivers")}
+            sx={{
+              backgroundColor: view === "drivers" ? "#007bff" : "transparent",
+              color: "#ffffff",
+            }}
+          >
+            Hiển thị Tài xế
+          </Button>
+          <Button
+            variant={view === "customers" ? "contained" : "outlined"}
+            onClick={() => handleViewChange("customers")}
+            sx={{
+              backgroundColor: view === "customers" ? "#007bff" : "transparent",
+              color: "#ffffff",
+            }}
+          >
+            Hiển thị Khách hàng
+          </Button>
+        </Box>
+
+        {/* Phần thanh tìm kiếm */}
+        <Box sx={{ marginLeft: "auto" }}>
+          <Topbar onSearch={handleSearch} view={view} />
+        </Box>
       </Box>
+
       {loading ? (
         <Box
           sx={{
@@ -345,6 +373,10 @@ const ListUsers = ({ searchQuery }) => {
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Số hàng mỗi trang" // Giữ nguyên phần này
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} trong tổng ${count}`
+            }
             sx={{ color: "#ffffff", backgroundColor: "#1e2a38" }}
           />
         </TableContainer>

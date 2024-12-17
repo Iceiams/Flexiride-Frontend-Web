@@ -197,6 +197,10 @@ const RevenueChart = () => {
       ? Object.keys(chartData[0]).filter((key) => key !== "date")
       : [];
 
+  const formatCurrency = (value) => {
+    return value.toLocaleString("vi-VN"); // Không thêm { style: "currency", currency: "VND" }
+  };
+
   return (
     <Box>
       <Box
@@ -349,6 +353,7 @@ const RevenueChart = () => {
               tickSize: 5,
               tickPadding: 5,
               legend: "",
+              format: (value) => formatCurrency(value),
             }}
             legends={[
               {

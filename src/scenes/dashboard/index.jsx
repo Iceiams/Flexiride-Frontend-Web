@@ -17,6 +17,7 @@ import NewUserLineChart from "../../components/NewUserLineChart";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardTwoToneIcon from "@mui/icons-material/ArrowForwardTwoTone";
 import RecentTransactions from "../../scenes/revenueStatBox/RevenueStatBox";
+import axios from "axios";
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -52,7 +53,11 @@ const Dashboard = () => {
 
   const fetchCompletedTrips = async () => {
     try {
-      const response = await api.get("/getCompletedTripCounts");
+      const response = await axios.get(
+        // "http://localhost:3000/admin/getCompletedTripCounts"
+
+        "https://flexiride.onrender.com/admin/getCompletedTripCounts"
+      );
       setCompletedTrips(response.data);
     } catch (error) {
       console.error("Error fetching completed trips:", error);
@@ -119,6 +124,7 @@ const Dashboard = () => {
             }
           />
         </Box>
+
         <Box
           gridColumn="span 3"
           backgroundColor={colors.primary[400]}
@@ -127,7 +133,31 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title={completedTrips.traditional}
+            title={
+              <Box
+                display="flex"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="center"
+                gap={1}
+              >
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
+                  color="white"
+                  sx={{ textAlign: "center" }}
+                >
+                  {completedTrips.traditional}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="white"
+                  sx={{ fontSize: "0.9rem", opacity: 0.8 }}
+                >
+                  chuyến hoàn thành
+                </Typography>
+              </Box>
+            }
             subtitle="Dịch Vụ Đặt Xe"
             progress={
               completedTrips.traditional /
@@ -158,7 +188,31 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title={completedTrips.carpool}
+            title={
+              <Box
+                display="flex"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="center"
+                gap={1}
+              >
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
+                  color="white"
+                  sx={{ textAlign: "center" }}
+                >
+                  {completedTrips.carpool}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="white"
+                  sx={{ fontSize: "0.9rem", opacity: 0.8 }}
+                >
+                  chuyến hoàn thành
+                </Typography>
+              </Box>
+            }
             subtitle="Dịch Vụ Xe Ghép"
             progress={
               completedTrips.carpool /
@@ -188,7 +242,31 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title={completedTrips.hireDriver}
+            title={
+              <Box
+                display="flex"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="center"
+                gap={1}
+              >
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
+                  color="white"
+                  sx={{ textAlign: "center" }}
+                >
+                  {completedTrips.hireDriver}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="white"
+                  sx={{ fontSize: "0.9rem", opacity: 0.8 }}
+                >
+                  chuyến hoàn thành
+                </Typography>
+              </Box>
+            }
             subtitle="Dịch Vụ Thuê Tài Xế"
             progress={
               completedTrips.hireDriver /

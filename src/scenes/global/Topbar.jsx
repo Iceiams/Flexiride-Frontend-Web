@@ -3,13 +3,24 @@ import { Box, IconButton, useTheme, InputBase } from "@mui/material";
 import { DebounceInput } from "react-debounce-input";
 import SearchIcon from "@mui/icons-material/Search";
 
-const Topbar = ({ onSearch }) => {
+const Topbar = ({ onSearch, view }) => {
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleSearch = (query) => {
     setSearchTerm(query);
     onSearch(query);
+  };
+
+  const getPlaceholder = () => {
+    switch (view) {
+      case "drivers":
+        return "Tìm kiếm tài xế";
+      case "customers":
+        return "Tìm kiếm khách hàng";
+      default:
+        return "Tìm kiếm";
+    }
   };
 
   return (
@@ -20,7 +31,7 @@ const Topbar = ({ onSearch }) => {
           debounceTimeout={300}
           element={InputBase}
           sx={{ ml: 2, flex: 1 }}
-          placeholder="Search"
+          placeholder={getPlaceholder()}
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
         />

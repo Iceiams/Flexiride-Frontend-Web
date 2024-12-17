@@ -133,7 +133,7 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Quản Lý Dữ Liệu
+              Quản Lý
             </Typography>
             <Item
               title="Thông Tin Người Dùng"

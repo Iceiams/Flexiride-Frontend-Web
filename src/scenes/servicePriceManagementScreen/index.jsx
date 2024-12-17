@@ -7,6 +7,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Typography,
 } from "@mui/material";
 import { Card } from "@mui/material";
 
@@ -252,8 +253,37 @@ const PriceForm = () => {
 
   return (
     <Box m="20px">
-      <Header title="QUẢN LÝ GIÁ DỊCH VỤ" />
-      <Card className="p-6">
+      <Box
+        sx={{
+          backgroundColor: "#141B2D",
+          borderRadius: "10px",
+          padding: "20px",
+          textAlign: "center",
+          boxShadow: "0px 10px 20px rgba(0,0,0,0.3)",
+          marginBottom: "20px",
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            color: "#ffffff",
+            fontFamily: "'Playfair Display', sans-serif",
+            fontWeight: "bold",
+          }}
+        >
+          QUẢN LÝ GIÁ DỊCH VỤ
+        </Typography>
+      </Box>
+      <Card
+        className="p-6"
+        sx={{
+          marginTop: "20px",
+          backgroundColor: "#1e293b", // Màu nền xám đậm phù hợp với giao diện tối
+          color: "#ffffff", // Màu chữ trắng
+          borderRadius: "10px", // Bo góc mềm mại
+          boxShadow: "0px 10px 15px rgba(0, 0, 0, 0.3)", // Đổ bóng nhẹ
+        }}
+      >
         <Formik
           onSubmit={handleFormSubmit}
           initialValues={getInitialValues(selectedService)}
@@ -281,7 +311,33 @@ const PriceForm = () => {
                 <FormControl
                   fullWidth
                   variant="filled"
-                  sx={{ gridColumn: "span 4" }}
+                  sx={{
+                    gridColumn: "span 4",
+                    backgroundColor: "#2d3748",
+                    borderRadius: "8px",
+                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
+                    border: "1px solid #63b3ed",
+                    marginBottom: "30px",
+                    "& .MuiFilledInput-root": {
+                      backgroundColor: "#2d3748",
+                      color: "#f8f9fa",
+                      "&:hover": {
+                        backgroundColor: "#4a5568",
+                      },
+                      "&.Mui-focused": {
+                        backgroundColor: "#1e293b",
+                        border: "1px solid #63b3ed",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "#a0aec0",
+                      fontSize: "1rem",
+                      "&.Mui-focused": {
+                        color: "#63b3ed",
+                        fontSize: "1.1rem",
+                      },
+                    },
+                  }}
                 >
                   <InputLabel>Tên Dịch Vụ</InputLabel>
                   <Select
@@ -289,11 +345,31 @@ const PriceForm = () => {
                     onChange={(e) =>
                       handleServiceChange(e.target.value, setFieldValue)
                     }
+                    sx={{
+                      color: "#f8f9fa",
+                      "& .MuiSelect-icon": {
+                        color: "#a0aec0", // Màu của icon xổ xuống
+                      },
+                    }}
                   >
                     {serviceOptions.map((option) => (
                       <MenuItem
                         key={option._id}
                         value={option.service_option_id.name}
+                        sx={{
+                          color: "#f8f9fa", // Màu chữ
+                          backgroundColor: "#2d3748", // Nền giống ô nhập liệu
+                          "&:hover": {
+                            backgroundColor: "#4a5568", // Hover sáng hơn
+                          },
+                          "&.Mui-selected": {
+                            backgroundColor: "#4a5568", // Màu khi item được chọn
+                            color: "#ffffff",
+                            "&:hover": {
+                              backgroundColor: "#63b3ed", // Hover khi item đã chọn
+                            },
+                          },
+                        }}
                       >
                         {option.service_option_id.name}
                       </MenuItem>
@@ -306,47 +382,51 @@ const PriceForm = () => {
                   <TextField
                     key={field}
                     fullWidth
-                    variant="filled"
-                    type="text" // Changed to text to support custom formatting
+                    variant="filled" // Dùng filled để có viền mềm mại
+                    type="text"
                     label={
                       priceLabels[field] ||
                       field.replace(/_/g, " ").toUpperCase()
                     }
+                    value={values[field]}
                     onChange={(e) => {
-                      // Ensure e.target.value is a string
-                      let value = e.target.value;
-
-                      // Convert to string if necessary
-                      if (typeof value !== "string") {
-                        value = String(value);
-                      }
-
-                      // Allow user to type freely
-                      value = value.replace(/[^0-9,]/g, ""); // Remove non-numeric characters except comma
-                      value = value.replace(",", "."); // Replace comma with dot for parsing
-
-                      // Set raw value for validation
+                      let value = e.target.value.replace(/[^0-9,]/g, "");
+                      value = value.replace(",", ".");
                       setFieldValue(field, value);
                     }}
                     onBlur={(e) => {
-                      handleBlur(e);
-                      // Chỉ reformat nếu giá trị thực sự thay đổi
                       const currentValue = e.target.value;
-                      let rawValue = parseVietnamNumber(currentValue);
-
-                      // Ensure rawValue is a number or empty string before reformatting
-                      if (typeof rawValue !== "string") {
-                        rawValue = String(rawValue);
-                      }
-
-                      // Chỉ format lại nếu giá trị đã thay đổi
-                      if (rawValue !== parseVietnamNumber(values[field])) {
-                        setFieldValue(field, formatVietnamNumber(rawValue));
-                      }
+                      const rawValue = parseVietnamNumber(currentValue);
+                      setFieldValue(field, formatVietnamNumber(rawValue));
                     }}
-                    value={values[field]}
-                    name={field}
-                    sx={{ gridColumn: "span 2" }}
+                    sx={{
+                      gridColumn: "span 2",
+                      backgroundColor: "#2d3748",
+                      borderRadius: "8px",
+                      border: "1px solid #4a5568",
+                      input: {
+                        color: "#f8f9fa",
+                        fontSize: "0.8rem",
+                      },
+                      label: {
+                        color: "#a0aec0",
+                        fontSize: "1rem",
+                        "&.Mui-focused": {
+                          color: "#63b3ed",
+                          fontSize: "1.1rem",
+                        },
+                      },
+                      "& .MuiFilledInput-root": {
+                        backgroundColor: "#2d3748",
+                        "&:hover": {
+                          backgroundColor: "#4a5568",
+                        },
+                        "&.Mui-focused": {
+                          backgroundColor: "#1e293b",
+                          border: "1px solid #63b3ed",
+                        },
+                      },
+                    }}
                     error={touched[field] && Boolean(errors[field])}
                     helperText={touched[field] && errors[field]}
                   />
