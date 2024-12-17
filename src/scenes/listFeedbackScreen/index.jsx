@@ -208,9 +208,27 @@ const DriverReviews = () => {
 
   return (
     <Box m="20px">
-      <Typography variant="h4" sx={{ mb: 2 }}>
-        Bảng Đánh Giá Tài Xế
-      </Typography>
+      <Box
+        sx={{
+          backgroundColor: "#141B2D",
+          borderRadius: "10px",
+          padding: "20px",
+          textAlign: "center",
+          boxShadow: "0px 10px 20px rgba(0,0,0,0.3)",
+          marginBottom: "20px",
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            color: "#ffffff",
+            fontFamily: "'Playfair Display', sans-serif",
+            fontWeight: "bold",
+          }}
+        >
+          DANH SÁCH CÁC ĐÁNH GIÁ TÀI XẾ
+        </Typography>
+      </Box>
       <Box m="40px 0 0 0" height="75vh">
         <DataGrid
           rows={drivers}
@@ -227,19 +245,46 @@ const DriverReviews = () => {
           rowHeight={100}
           sx={{
             "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#FFCF48",
-              color: "#FDC83C",
+              backgroundColor: "#1F2A40", // Màu nền header
+              color: "#4CCEAC", // Màu chữ header
+              fontSize: "14px",
+            },
+            "& .MuiDataGrid-columnHeader": {
+              color: "#F7AB3F", // Màu chữ cho từng ô header
               fontWeight: "bold",
-              fontSize: "15px",
             },
             "& .MuiDataGrid-columnSeparator": {
               display: "none",
+            },
+            "& .MuiDataGrid-cell": {
+              fontSize: "13px",
+            },
+          }}
+          localeText={{
+            toolbarDensity: "Mật độ",
+            toolbarDensityLabel: "Mật độ",
+            toolbarDensityCompact: "Nhỏ",
+            toolbarDensityStandard: "Tiêu chuẩn",
+            toolbarDensityComfortable: "Thoải mái",
+            noRowsLabel: "Không có dữ liệu",
+            columnMenuSortAsc: "Sắp xếp tăng dần",
+            columnMenuSortDesc: "Sắp xếp giảm dần",
+            columnMenuFilter: "Lọc",
+            columnMenuHideColumn: "Ẩn cột",
+            columnMenuShowColumns: "Hiển thị cột",
+            footerRowSelected: (count) => `${count} hàng đã chọn`,
+            footerTotalRows: "Tổng số hàng:",
+            columnMenuManageColumns: "Quản lý cột",
+            footerPaginationRowsPerPage: "Số hàng mỗi trang",
+            footerPaginationRowsPerPageTooltip: "Số hàng trên mỗi trang",
+            footerPaginationOf: "của",
+            MuiTablePagination: {
+              labelRowsPerPage: "Số hàng mỗi trang",
             },
           }}
         />
       </Box>
 
-      {/* Dialog for showing review details in a table format */}
       <Dialog
         open={openReviewDialog}
         onClose={handleCloseReviewDialog}
@@ -263,7 +308,6 @@ const DriverReviews = () => {
                       borderBottom: "2px solid #3D4C6E",
                     }}
                   >
-                    <TableCell>Người Đánh Giá</TableCell>
                     <TableCell>Nội Dung</TableCell>
                     <TableCell>Đánh Giá</TableCell>
                   </TableRow>
@@ -271,9 +315,6 @@ const DriverReviews = () => {
                 <TableBody>
                   {selectedReviews.map((review) => (
                     <TableRow key={review._id}>
-                      <TableCell>
-                        {review.accountInfo?.name || "Không có tên"}
-                      </TableCell>
                       <TableCell>{review.content}</TableCell>
                       <TableCell>
                         {Array.from({ length: review.rate }, (_, index) => (
@@ -296,7 +337,6 @@ const DriverReviews = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for success and error messages */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}

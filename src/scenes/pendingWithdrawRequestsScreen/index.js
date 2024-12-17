@@ -13,6 +13,7 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 const PendingWithdrawRequests = () => {
   const theme = useTheme();
@@ -28,9 +29,14 @@ const PendingWithdrawRequests = () => {
 
   const fetchPendingWithdrawals = async () => {
     try {
-      const response = await api.get(
+      const response = await axios.get(
         "https://flexiride.onrender.com/driver/wallet/withdraw-requests/pending"
       );
+
+      // const response = await axios.get(
+      //   "http://localhost:3000/driver/wallet/withdraw-requests/pending"
+      // );
+
       setWithdrawRequests(
         response.data.pendingWithdrawals.map((req, index) => ({
           ...req,
@@ -52,10 +58,16 @@ const PendingWithdrawRequests = () => {
   // Approve a withdrawal request
   const processApproveRequest = async (transactionId) => {
     try {
-      const response = await api.post(
+      const response = await axios.post(
         "https://flexiride.onrender.com/driver/wallet/withdraw-request/approve",
         { transactionId }
       );
+
+      // const response = await axios.post(
+      //   "http://localhost:3000/driver/wallet/withdraw-request/approve",
+      //   { transactionId }
+      // );
+
       if (response.data.success) {
         showSnackbar("Yêu cầu rút tiền đã được phê duyệt.", "success");
 
@@ -79,10 +91,15 @@ const PendingWithdrawRequests = () => {
 
   const processCompleteRequest = async (transactionId) => {
     try {
-      const response = await api.post(
+      const response = await axios.post(
         "https://flexiride.onrender.com/driver/wallet/withdraw-request/complete",
         { transactionId }
       );
+
+      // const response = await axios.post(
+      //   "http://localhost:3000/driver/wallet/withdraw-request/complete",
+      //   { transactionId }
+      // );
       if (response.data.success) {
         showSnackbar("Giao dịch đã được hoàn tất.", "success");
 
@@ -257,7 +274,28 @@ const PendingWithdrawRequests = () => {
 
   return (
     <Box m="20px">
-      <Header title="Yêu cầu rút tiền" />
+      <Box
+        sx={{
+          backgroundColor: "#141B2D",
+          borderRadius: "10px",
+          padding: "20px",
+          textAlign: "center",
+          boxShadow: "0px 10px 20px rgba(0,0,0,0.3)",
+          marginBottom: "20px",
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            color: "#ffffff",
+            fontFamily: "'Playfair Display', sans-serif",
+            fontWeight: "bold",
+          }}
+        >
+          YÊU CẦU RÚT TIỀN
+        </Typography>
+      </Box>
+
       <Box m="40px 0 0 0" height="75vh">
         <DataGrid
           rows={withdrawRequests}
@@ -267,6 +305,45 @@ const PendingWithdrawRequests = () => {
           rowHeight={80}
           pageSize={10}
           rowsPerPageOptions={[10, 20, 50]}
+          sx={{
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#1F2A40", // Màu nền header
+              color: "#4CCEAC", // Màu chữ header
+              fontSize: "14px",
+            },
+            "& .MuiDataGrid-columnHeader": {
+              color: "#F7AB3F", // Màu chữ cho từng ô header
+              fontWeight: "bold",
+            },
+            "& .MuiDataGrid-columnSeparator": {
+              display: "none",
+            },
+            "& .MuiDataGrid-cell": {
+              fontSize: "13px",
+            },
+          }}
+          localeText={{
+            toolbarDensity: "Mật độ",
+            toolbarDensityLabel: "Mật độ",
+            toolbarDensityCompact: "Nhỏ",
+            toolbarDensityStandard: "Tiêu chuẩn",
+            toolbarDensityComfortable: "Thoải mái",
+            noRowsLabel: "Không có dữ liệu",
+            columnMenuSortAsc: "Sắp xếp tăng dần",
+            columnMenuSortDesc: "Sắp xếp giảm dần",
+            columnMenuFilter: "Lọc",
+            columnMenuHideColumn: "Ẩn cột",
+            columnMenuShowColumns: "Hiển thị cột",
+            footerRowSelected: (count) => `${count} hàng đã chọn`,
+            footerTotalRows: "Tổng số hàng:",
+            columnMenuManageColumns: "Quản lý cột",
+            footerPaginationRowsPerPage: "Số hàng mỗi trang",
+            footerPaginationRowsPerPageTooltip: "Số hàng trên mỗi trang",
+            footerPaginationOf: "của",
+            MuiTablePagination: {
+              labelRowsPerPage: "Số hàng mỗi trang",
+            },
+          }}
         />
       </Box>
 

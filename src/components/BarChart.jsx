@@ -43,12 +43,12 @@ const RideStatisticsChart = () => {
 
       const response = await axios.get(
         `https://flexiride.onrender.com/admin/getRideStatsByTimeRange`,
+        // `http://localhost:3000/admin/getRideStatsByTimeRange`,
         { params }
       );
 
       let data = response.data;
 
-      // Điều chỉnh dữ liệu hiển thị cho từng timeFilter
       switch (timeFilter) {
         case "today":
           data = [
@@ -79,7 +79,6 @@ const RideStatisticsChart = () => {
               ...item,
             }))
             .sort((a, b) => {
-              // Trích xuất số tháng từ key monthYear hoặc sử dụng index nếu không có
               const getMonth = (item) => {
                 if (item.monthYear) {
                   return parseInt(item.monthYear.split("-")[0]);
@@ -100,10 +99,9 @@ const RideStatisticsChart = () => {
           data = [];
       }
 
-      // Nếu là tuần này, chuyển `dateRange` thành một key `date`
       if (timeFilter === "thisWeek") {
         data = data.map((item) => ({
-          date: item.dateRange || "N/A", // Sử dụng `dateRange` thay vì `date`
+          date: item.dateRange || "N/A",
           ...item,
         }));
       }
@@ -111,10 +109,8 @@ const RideStatisticsChart = () => {
       setStatsData(data);
     } catch (error) {
       if (error.response?.status === 401) {
-        // Lỗi phiên hết hạn, thông báo cho người dùng
         setError("Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.");
       } else {
-        // Các lỗi khác
         setError(
           error.response?.data?.message || "Có lỗi xảy ra khi lấy dữ liệu."
         );
@@ -127,10 +123,10 @@ const RideStatisticsChart = () => {
   }, [timeFilter, statusFilter, startDate, endDate]);
 
   useEffect(() => {
-    if (timeFilter === "custom" && !isCustomApplied) return; // Không fetch nếu chưa nhấn "Áp dụng"
+    if (timeFilter === "custom" && !isCustomApplied) return;
     fetchRideStats();
     if (timeFilter === "custom") {
-      setIsCustomApplied(false); // Reset sau khi fetch thành công
+      setIsCustomApplied(false);
     }
   }, [timeFilter, statusFilter, isCustomApplied]);
 
@@ -141,7 +137,7 @@ const RideStatisticsChart = () => {
     }
 
     setError(null);
-    setIsCustomApplied(true); // Kích hoạt fetch khi nhấn áp dụng
+    setIsCustomApplied(true);
   };
 
   const timeFilters = useMemo(
@@ -258,13 +254,7 @@ const RideStatisticsChart = () => {
         alignItems="center"
         mb={3}
       >
-        <Typography variant="h5">
-          {/* {timeFilter === "today" && "Thống Kê Hôm Nay"}
-          {timeFilter === "thisWeek" && "Thống Kê Tuần Này"}
-          {timeFilter === "thisMonth" && "Thống Kê Tháng Này"}
-          {timeFilter === "thisYear" && "Thống Kê Năm Này"}
-          {timeFilter === "custom" && `Thống Kê Từ ${startDate} Đến ${endDate}`} */}
-        </Typography>
+        <Typography variant="h5"></Typography>
         <Box display="flex" gap={2} alignItems="center">
           <FormControl style={{ minWidth: 120 }}>
             <InputLabel style={{ fontSize: "14px", fontWeight: "500" }}>
@@ -358,14 +348,13 @@ const RideStatisticsChart = () => {
           </Typography>
         </Box>
       ) : (
-        <Box position="relative" height="450px">
-          {/* Custom Legend cho trục Y */}
+        <Box position="relative" height="550px">
           <Typography
             style={{
               position: "absolute",
               top: "10px",
-              left: "0", // Căn chỉnh với trục Y
-              transform: "translate(20%, 0)", // Dịch sang trái một nửa chiều rộng để căn giữa
+              left: "0",
+              transform: "translate(20%, 0)",
               textAlign: "center",
               fontSize: "15px",
               color: colors.grey[100],
@@ -377,7 +366,7 @@ const RideStatisticsChart = () => {
             style={{
               position: "absolute",
               bottom: "140px",
-              right: "40px", // Đặt chữ ở bên phải
+              right: "40px",
               textAlign: "center",
               fontSize: "15px",
               color: colors.grey[100],
@@ -448,11 +437,11 @@ const RideStatisticsChart = () => {
               renderTick: (tick) => (
                 <text
                   x={tick.x}
-                  y={tick.y + 30} // Khoảng cách giữa chữ và trục
+                  y={tick.y + 30}
                   textAnchor="middle"
                   style={{
-                    fontSize: "14px", // Kích thước chữ
-                    fill: "white", // Màu chữ
+                    fontSize: "14px",
+                    fill: "white",
                   }}
                 >
                   {tick.value}
@@ -465,7 +454,7 @@ const RideStatisticsChart = () => {
               tickRotation: 0,
               legend: "",
             }}
-            label={() => null} // Ẩn giá trị hiển thị trên cột
+            label={() => null}
             labelSkipWidth={12}
             labelSkipHeight={12}
             legends={[
@@ -474,8 +463,8 @@ const RideStatisticsChart = () => {
                 anchor: "bottom",
                 direction: "row",
                 justify: false,
-                translateX: 0, // Căn giữa theo trục X
-                translateY: 90, // Đặt khoảng cách dưới trục X
+                translateX: 0,
+                translateY: 90,
                 itemsSpacing: 10,
                 itemWidth: 100,
                 itemHeight: 20,

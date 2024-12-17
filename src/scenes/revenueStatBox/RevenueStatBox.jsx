@@ -62,7 +62,7 @@ const RevenueOverview = () => {
     try {
       const today = await api.get(
         // "http://localhost:3000/admin/getTotalRevenueByPeriod",
-        // "/getTotalRevenueByPeriod",
+        "/getTotalRevenueByPeriod",
         {
           params: { filterType: "today" },
         }
@@ -118,7 +118,7 @@ const RevenueOverview = () => {
             letterSpacing: "1px",
           }}
         >
-          THEO DÕI DOANH THU
+          DOANH THU HỆ THỐNG
         </Typography>
       </Box>
 

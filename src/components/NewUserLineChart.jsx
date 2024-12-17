@@ -15,14 +15,15 @@ const NewUserLineChart = () => {
   const [chartData, setChartData] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Gọi API để lấy dữ liệu
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/getServiceUsageTrends");
+        const response = await axios.get(
+          // "http://localhost:3000/admin/getServiceUsageTrends"
+          "https://flexiride.onrender.com/admin/getServiceUsageTrends"
+        );
         const { data } = response.data;
 
-        // Định dạng dữ liệu cho Recharts
         const formattedData = data.map((item) => ({
           date: item.date,
           count: item.count,
@@ -48,14 +49,12 @@ const NewUserLineChart = () => {
     fetchData();
   }, []);
 
-  // Hiển thị khi có lỗi
   if (errorMessage) {
     return (
       <div style={{ color: "red", textAlign: "center" }}>{errorMessage}</div>
     );
   }
 
-  // Hiển thị khi không có dữ liệu
   if (chartData.length === 0) {
     return (
       <div style={{ textAlign: "center", color: "#9CA3AF" }}>
@@ -63,7 +62,6 @@ const NewUserLineChart = () => {
       </div>
     );
   }
-  // Custom Tooltip Component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -78,7 +76,7 @@ const NewUserLineChart = () => {
         >
           <p style={{ margin: 0, fontWeight: "bold" }}>Ngày: {label}</p>
           <p style={{ margin: 0, color: "#3b82f6" }}>
-            Người sử dụng: {payload[0].value}
+            Số lượt sử dụng thành công: {payload[0].value}
           </p>
         </div>
       );
@@ -92,33 +90,27 @@ const NewUserLineChart = () => {
         data={chartData}
         margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
       >
-        {/* Đường lưới mờ hơn */}
         <CartesianGrid stroke="#f3f4f6" strokeDasharray="2 2" />
 
-        {/* Số hiển thị màu sáng hơn */}
         <XAxis
           dataKey="date"
           stroke="#d1d5db"
           tick={{
             fontSize: 12,
-            fill: "#f9fafb", // Màu sáng hơn cho thời gian
+            fill: "#f9fafb",
           }}
-        />
-        <YAxis
-          stroke="#d1d5db"
-          tick={{
-            fontSize: 12,
-            fill: "#f9fafb", // Màu sáng hơn cho trục Y
+          tickFormatter={(tick) => {
+            // Chỉ hiển thị MM-DD
+            return tick;
           }}
         />
 
         <Tooltip content={<CustomTooltip />} />
 
-        {/* Đường biểu đồ màu sáng */}
         <Line
           type="monotone"
           dataKey="count"
-          stroke="#3b82f6" // Màu sáng hơn
+          stroke="#3b82f6"
           strokeWidth={2}
           activeDot={{ r: 10 }}
         />

@@ -15,7 +15,7 @@ import {
 import moment from "moment";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import api from "../../api/axiosConfig";
-
+import vi_VN from "antd/es/date-picker/locale/vi_VN";
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
@@ -111,10 +111,7 @@ const VoucherList = () => {
         applicable_service_options: cleanedOptions,
         type: "fixed",
         min_order_value: values.min_order_value || 0,
-        start_date:
-          editingVoucher?.start_date === values.dateRange[0]?.toISOString()
-            ? editingVoucher.start_date
-            : values.dateRange[0]?.toISOString(),
+        start_date: values.dateRange[0]?.toISOString(),
         end_date: values.dateRange[1]?.toISOString(),
       };
 
@@ -132,10 +129,9 @@ const VoucherList = () => {
 
       if (response.data.success) {
         message.success(
-          editingVoucher?.status === "expired" &&
-            voucherData.end_date > new Date()
-            ? "Trạng thái voucher đã được đặt lại thành 'Không hoạt động'."
-            : `Voucher ${editingVoucher ? "đã cập nhật" : "đã tạo"} thành công!`
+          editingVoucher
+            ? "Voucher đã cập nhật thành công!"
+            : "Voucher đã tạo thành công!"
         );
         setModalVisible(false);
         form.resetFields();
@@ -144,7 +140,27 @@ const VoucherList = () => {
         throw new Error(response.data.message);
       }
     } catch (error) {
-      message.error(`Lỗi: ${error.message}`);
+      // Kiểm tra và hiển thị lỗi từ backend
+      if (error.response && error.response.data.errors) {
+        const backendErrors = error.response.data.errors;
+
+        // Ánh xạ lỗi đến các trường trong form
+        form.setFields(
+          backendErrors
+            .map((err) => {
+              if (err.includes("Ngày bắt đầu")) {
+                return {
+                  name: "dateRange",
+                  errors: [err],
+                };
+              }
+              return null;
+            })
+            .filter(Boolean)
+        );
+      } else {
+        message.error(`Lỗi: ${error.message}`);
+      }
     }
   };
 
@@ -445,21 +461,27 @@ const VoucherList = () => {
               if (!value || !value[0] || !value[1]) {
                 return Promise.reject("Ngày bắt đầu và kết thúc là bắt buộc.");
               }
-              const [start, end] = value;
-              const now = moment().startOf("day");
 
-              // Cho phép ngày bắt đầu là hôm nay hoặc ngày tương lai
-              if (
-                (!editingVoucher ||
-                  editingVoucher.start_date !== start.toISOString()) &&
-                start.isBefore(now)
-              ) {
+              const [start, end] = value;
+              const now = moment(); // Thời gian hiện tại (cả ngày và giờ)
+              const today = moment().startOf("day"); // Đầu ngày hôm nay (00:00:00)
+
+              // Trường hợp 1: So sánh ngày bắt đầu là trong quá khứ
+              if (start.isBefore(today)) {
                 return Promise.reject(
-                  "Ngày bắt đầu phải là hôm nay hoặc ngày trong tương lai."
+                  "Ngày bắt đầu phải là hôm nay hoặc thời gian trong tương lai."
                 );
               }
 
-              if (start.isAfter(end, "day")) {
+              // Trường hợp 2: Nếu ngày bắt đầu là hôm nay, kiểm tra giờ phút
+              if (start.isSame(today, "day") && start.isBefore(now)) {
+                return Promise.reject(
+                  "Giờ bắt đầu trong ngày hôm nay không được nhỏ hơn thời gian hiện tại."
+                );
+              }
+
+              // Trường hợp 3: Kiểm tra ngày kết thúc
+              if (start.isAfter(end, "minute")) {
                 return Promise.reject(
                   "Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc."
                 );
@@ -510,7 +532,7 @@ const VoucherList = () => {
         <Select
           mode="multiple"
           placeholder="Chọn các dịch vụ áp dụng"
-          options={serviceOptions} // Đảm bảo options được load từ API
+          options={serviceOptions}
           style={{ width: "100%" }}
         />
       </Form.Item>
@@ -530,10 +552,10 @@ const VoucherList = () => {
           icon={<PlusOutlined />}
           onClick={showCreateModal}
         >
-          Tạo Voucher
+          Tạo Mã
         </Button>
         <Input.Search
-          placeholder="Tìm kiếm voucher..."
+          placeholder="Tìm kiếm..."
           value={filters.search}
           onChange={(e) =>
             setFilters((prev) => ({
@@ -552,17 +574,19 @@ const VoucherList = () => {
           style={{ width: 150 }}
           allowClear
         >
-          <Option value="">Tất cả</Option> {/* Thêm tùy chọn Tất cả */}
+          <Option value="">Tất cả</Option>
           <Option value="active">Hoạt động</Option>
           <Option value="inactive">Không hoạt động</Option>
           <Option value="expired">Hết hạn</Option>
         </Select>
 
         <RangePicker
+          locale={vi_VN}
           value={filters.dateRange}
           onChange={(dates) =>
             setFilters((prev) => ({ ...prev, dateRange: dates || undefined }))
           }
+          style={{ width: "100%" }}
         />
         <Button
           type="default"
@@ -604,6 +628,8 @@ const VoucherList = () => {
         open={modalVisible}
         onOk={() => form.submit()}
         onCancel={() => setModalVisible(false)}
+        okText="Lưu"
+        cancelText="Hủy"
       >
         {voucherForm}
       </Modal>

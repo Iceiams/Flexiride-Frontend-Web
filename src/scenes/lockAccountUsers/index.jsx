@@ -223,7 +223,27 @@ const ListLockedUsers = () => {
 
   return (
     <Box m="20px">
-      <Header title="Danh sách" subtitle="Tài Khoản Bị Khóa" />
+      <Box
+        sx={{
+          backgroundColor: "#141B2D",
+          borderRadius: "10px",
+          padding: "20px",
+          textAlign: "center",
+          boxShadow: "0px 10px 20px rgba(0,0,0,0.3)",
+          marginBottom: "20px",
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            color: "#ffffff",
+            fontFamily: "'Playfair Display', sans-serif",
+            fontWeight: "bold",
+          }}
+        >
+          DANH SÁCH TÀI KHOẢN BỊ KHÓA
+        </Typography>
+      </Box>
       <Box m="40px 0 0 0" height="75vh">
         <DataGrid
           rows={drivers}
@@ -231,6 +251,45 @@ const ListLockedUsers = () => {
           getRowId={(row) => row._id}
           components={{ Toolbar: GridToolbar }}
           rowHeight={80}
+          sx={{
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#1F2A40", // Màu nền header
+              color: "#4CCEAC", // Màu chữ header
+              fontSize: "14px",
+            },
+            "& .MuiDataGrid-columnHeader": {
+              color: "#F7AB3F", // Màu chữ cho từng ô header
+              fontWeight: "bold",
+            },
+            "& .MuiDataGrid-columnSeparator": {
+              display: "none",
+            },
+            "& .MuiDataGrid-cell": {
+              fontSize: "13px",
+            },
+          }}
+          localeText={{
+            toolbarDensity: "Mật độ",
+            toolbarDensityLabel: "Mật độ",
+            toolbarDensityCompact: "Nhỏ",
+            toolbarDensityStandard: "Tiêu chuẩn",
+            toolbarDensityComfortable: "Thoải mái",
+            noRowsLabel: "Không có dữ liệu",
+            columnMenuSortAsc: "Sắp xếp tăng dần",
+            columnMenuSortDesc: "Sắp xếp giảm dần",
+            columnMenuFilter: "Lọc",
+            columnMenuHideColumn: "Ẩn cột",
+            columnMenuShowColumns: "Hiển thị cột",
+            footerRowSelected: (count) => `${count} hàng đã chọn`,
+            footerTotalRows: "Tổng số hàng:",
+            columnMenuManageColumns: "Quản lý cột",
+            footerPaginationRowsPerPage: "Số hàng mỗi trang",
+            footerPaginationRowsPerPageTooltip: "Số hàng trên mỗi trang",
+            footerPaginationOf: "của",
+            MuiTablePagination: {
+              labelRowsPerPage: "Số hàng mỗi trang",
+            },
+          }}
         />
       </Box>
 
