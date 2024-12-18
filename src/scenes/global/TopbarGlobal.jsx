@@ -188,7 +188,7 @@ const Topbar = () => {
           "aria-labelledby": "basic-button",
         }}
       >
-        <MenuItem onClick={handleLogout}>Logout</MenuItem>
+        <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
       </Menu>
 
       {/* Notifications Popover */}
