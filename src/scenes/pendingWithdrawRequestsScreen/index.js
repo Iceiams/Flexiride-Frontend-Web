@@ -50,16 +50,9 @@ const PendingWithdrawRequests = () => {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    socket.on("withdrawRequest", (data) => {
-      console.log("Received withdraw request:", data);
-      // Update your UI or state
-      fetchPendingWithdrawals(); // Refresh the list
-    });
 
-    return () => {
-      socket.off("withdrawRequest");
-    };
+  useEffect(() => {
+    fetchPendingWithdrawals();
   }, []);
 
   // Approve a withdrawal request
