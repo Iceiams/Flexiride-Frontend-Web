@@ -379,6 +379,141 @@ const ListUsers = ({ searchQuery }) => {
             }
             sx={{ color: "#ffffff", backgroundColor: "#1e2a38" }}
           />
+          <Dialog
+            open={openDetail}
+            onClose={handleCloseDetail}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle>Chi tiết giấy phép</DialogTitle>
+            <DialogContent dividers>
+              {selectedDocument && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {/* Passport Section */}
+                  <Box>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                      Hộ chiếu
+                    </Typography>
+                    <Typography>
+                      Ngày cấp: {selectedDocument.passport.issueDate}
+                    </Typography>
+                    <Typography>
+                      Nơi cấp: {selectedDocument.passport.issuePlace}
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
+                      <img
+                        src={selectedDocument.passport.frontImage}
+                        alt="Passport Front"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                      <img
+                        src={selectedDocument.passport.backImage}
+                        alt="Passport Back"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Driver License Section */}
+                  <Box>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                      Bằng lái xe
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
+                      <img
+                        src={selectedDocument.driverLicense.frontImage}
+                        alt="Driver License Front"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                      <img
+                        src={selectedDocument.driverLicense.backImage}
+                        alt="Driver License Back"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Criminal Record Section */}
+                  <Box>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                      Lý lịch tư pháp
+                    </Typography>
+                    <Typography>
+                      Ngày cấp: {selectedDocument.criminalRecord.issueDate}
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
+                      <img
+                        src={selectedDocument.criminalRecord.frontImage}
+                        alt="Criminal Record Front"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                      <img
+                        src={selectedDocument.criminalRecord.backImage}
+                        alt="Criminal Record Back"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Vehicle Registration Section */}
+                  <Box>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                      Đăng ký phương tiện
+                    </Typography>
+                    <Typography>
+                      Biển số:{" "}
+                      {selectedDocument.vehicleRegistration.licensePlate}
+                    </Typography>
+                    <Typography>
+                      Loại nhiên liệu:{" "}
+                      {selectedDocument.vehicleRegistration.fuelType}
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
+                      <img
+                        src={selectedDocument.vehicleRegistration.frontImage}
+                        alt="Vehicle Registration Front"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                      <img
+                        src={selectedDocument.vehicleRegistration.backImage}
+                        alt="Vehicle Registration Back"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Vehicle Insurance Section */}
+                  <Box>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                      Bảo hiểm xe
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
+                      <img
+                        src={selectedDocument.vehicleInsurance.frontImage}
+                        alt="Vehicle Insurance Front"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                      <img
+                        src={selectedDocument.vehicleInsurance.backImage}
+                        alt="Vehicle Insurance Back"
+                        width="100"
+                        style={{ borderRadius: 8 }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </DialogContent>
+          </Dialog>
         </TableContainer>
       )}
     </Box>
