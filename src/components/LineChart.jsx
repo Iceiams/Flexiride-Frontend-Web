@@ -33,14 +33,19 @@ const RevenueChart = () => {
       setLoading(true);
 
       const params = { filterType };
-
-      // Kiểm tra khi filterType là custom
       if (filterType === "custom") {
         if (!startDate || !endDate) {
           setError("Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
           setLoading(false);
-          return; // Không gọi API nếu thiếu thông tin
+          return;
         }
+
+        if (new Date(startDate) > new Date(endDate)) {
+          setError("Ngày bắt đầu không thể lớn hơn ngày kết thúc.");
+          setLoading(false);
+          return;
+        }
+
         params.startDate = startDate;
         params.endDate = endDate;
       }
@@ -60,7 +65,7 @@ const RevenueChart = () => {
       setError("Lỗi khi lấy dữ liệu doanh thu. Vui lòng thử lại.");
     } finally {
       setLoading(false);
-      setIsApplyClicked(false); // Reset trạng thái
+      setIsApplyClicked(false);
     }
   }, [filterType, startDate, endDate]);
 
@@ -71,15 +76,14 @@ const RevenueChart = () => {
     data.forEach((item) => {
       let formattedDate = item.date;
 
-      // Định dạng ngày hoặc tháng dựa trên filterType
       if (filterType === "day") {
         const date = new Date(item.date);
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
-        formattedDate = `${day}-${month}`; // Ngày trước tháng
+        formattedDate = `${day}-${month}`;
       } else if (filterType === "month") {
         const [year, month] = item.date.split("-");
-        formattedDate = `${month}-${year}`; // Tháng trước năm
+        formattedDate = `${month}-${year}`;
       }
 
       const row = { date: formattedDate };
@@ -109,7 +113,7 @@ const RevenueChart = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Doanh Thu");
 
-    worksheet.mergeCells("A1:B1");
+    worksheet.mergeCells("A1:C1");
     const mainTitle = worksheet.getCell("A1");
     mainTitle.value = "BÁO CÁO DOANH THU HỆ THỐNG";
     mainTitle.alignment = { horizontal: "center", vertical: "middle" };
@@ -122,57 +126,73 @@ const RevenueChart = () => {
 
     worksheet.addRow([]);
 
+    const headerRow = worksheet.addRow([
+      "Thời Gian",
+      "Tên Dịch Vụ",
+      "Doanh Thu (VNĐ)",
+    ]);
+
     let grandTotal = 0;
+    let startRow = 3;
 
     chartData.forEach((series) => {
-      const serviceTotal = Object.values(series)
-        .slice(1)
-        .reduce((sum, value) => sum + value, 0);
-      grandTotal += serviceTotal;
+      const date = series.date;
 
-      const serviceTitleRow = worksheet.addRow([`Tên Dịch Vụ: Tổng`]);
-      serviceTitleRow.font = {
-        bold: true,
-        size: 14,
-        color: { argb: "FFFFFFFF" },
-      };
-      serviceTitleRow.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "4CAF50" },
+      const services = Object.entries(series).filter(([key]) => key !== "date");
+      const serviceCount = services.length;
+
+      worksheet.mergeCells(`A${startRow}:A${startRow + serviceCount - 1}`);
+      worksheet.getCell(`A${startRow}`).value = date;
+      worksheet.getCell(`A${startRow}`).alignment = {
+        vertical: "middle",
+        horizontal: "center",
       };
 
-      const headerRow = worksheet.addRow(["Thời Gian", "Doanh Thu (VNĐ)"]);
-      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      headerRow.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "2196F3" },
-      };
-      headerRow.alignment = { horizontal: "center" };
+      let totalForDate = 0;
 
-      Object.entries(series).forEach(([key, value]) => {
-        if (key !== "date") {
-          worksheet.addRow([key, value]);
-        }
+      services.forEach(([serviceName, value], index) => {
+        worksheet.getCell(`B${startRow + index}`).value = serviceName;
+        worksheet.getCell(`C${startRow + index}`).value = value;
+        worksheet.getCell(`C${startRow + index}`).alignment = {
+          horizontal: "right",
+        };
+        totalForDate += value;
       });
 
-      const totalRow = worksheet.addRow(["Tổng doanh thu", serviceTotal]);
-      totalRow.font = { bold: true, color: { argb: "FF0000" } };
-      totalRow.alignment = { horizontal: "right" };
+      worksheet.getCell(`B${startRow + serviceCount}`).value = "Tổng";
+      worksheet.getCell(`B${startRow + serviceCount}`).font = {
+        bold: true,
+        color: { argb: "FF0000" },
+      };
+      worksheet.getCell(`C${startRow + serviceCount}`).value = totalForDate;
+      worksheet.getCell(`C${startRow + serviceCount}`).font = {
+        bold: true,
+        color: { argb: "FF0000" },
+      };
+      worksheet.getCell(`C${startRow + serviceCount}`).alignment = {
+        horizontal: "right",
+      };
 
-      worksheet.addRow([]);
+      grandTotal += totalForDate;
+      startRow += serviceCount + 1;
     });
 
+    worksheet.addRow([]);
     const grandTotalRow = worksheet.addRow([
       "Tổng doanh thu toàn bộ",
+      "",
       grandTotal,
     ]);
     grandTotalRow.font = { bold: true, size: 12, color: { argb: "FF0000" } };
     grandTotalRow.alignment = { horizontal: "right" };
 
-    worksheet.columns = [{ width: 30 }, { width: 20 }];
+    worksheet.columns = [
+      { width: 20 }, // Thời Gian
+      { width: 30 }, // Tên Dịch Vụ
+      { width: 20 }, // Doanh Thu
+    ];
 
+    // Xuất file Excel
     workbook.xlsx.writeBuffer().then((buffer) => {
       const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -185,10 +205,9 @@ const RevenueChart = () => {
   };
 
   useEffect(() => {
-    // Chỉ gọi API nếu không phải custom hoặc đã nhấn nút "Áp dụng"
     if (filterType !== "custom" || isApplyClicked) {
       fetchRevenueData();
-      setIsApplyClicked(false); // Reset lại trạng thái
+      setIsApplyClicked(false);
     }
   }, [filterType, isApplyClicked]);
 
@@ -198,7 +217,7 @@ const RevenueChart = () => {
       : [];
 
   const formatCurrency = (value) => {
-    return value.toLocaleString("vi-VN"); // Không thêm { style: "currency", currency: "VND" }
+    return value.toLocaleString("vi-VN");
   };
 
   return (
@@ -406,7 +425,7 @@ const RevenueChart = () => {
                     strokeWidth: 1,
                   },
                   text: {
-                    fontSize: 13, // Làm to hơn chữ hiển thị
+                    fontSize: 13,
                     fill: "#FFFFFF",
                   },
                 },

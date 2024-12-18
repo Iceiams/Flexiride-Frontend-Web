@@ -23,7 +23,6 @@ const PendingWithdrawRequests = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -49,14 +48,10 @@ const PendingWithdrawRequests = () => {
     }
   }, []);
 
-  // Socket listener
   useEffect(() => {
-    // Kết nối socket
     const socket = io("https://flexiride.onrender.com");
 
-    // Lắng nghe sự kiện withdrawRequest
     socket.on("withdrawRequest", (data) => {
-      // Hiển thị snackbar thông báo
       showSnackbar(
         `Yêu cầu rút tiền mới từ tài xế ${data.driverName}. Số tiền: ${data.amount} VND`,
         "info"
@@ -66,18 +61,15 @@ const PendingWithdrawRequests = () => {
       fetchPendingWithdrawals();
     });
 
-    // Cleanup kết nối socket khi component unmount
     return () => {
       socket.disconnect();
     };
   }, [fetchPendingWithdrawals]);
 
-  // Initial fetch
   useEffect(() => {
     fetchPendingWithdrawals();
   }, [fetchPendingWithdrawals]);
 
-  // Approve a withdrawal request
   const processApproveRequest = async (transactionId) => {
     try {
       const response = await axios.post(
@@ -93,7 +85,6 @@ const PendingWithdrawRequests = () => {
       if (response.data.success) {
         showSnackbar("Yêu cầu rút tiền đã được phê duyệt.", "success");
 
-        // Cập nhật trạng thái trực tiếp
         setWithdrawRequests((prevRequests) =>
           prevRequests.map((request) =>
             request._id === transactionId

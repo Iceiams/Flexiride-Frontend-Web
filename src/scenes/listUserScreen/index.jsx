@@ -19,7 +19,7 @@ import {
   DialogContent,
 } from "@mui/material";
 import Topbar from "../global/Topbar";
-
+import moment from "moment";
 const ListUsers = ({ searchQuery }) => {
   const [data, setData] = useState([]);
   const [view, setView] = useState("drivers");
@@ -30,6 +30,8 @@ const ListUsers = ({ searchQuery }) => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const fetchData = async (
     query = "",
@@ -108,6 +110,16 @@ const ListUsers = ({ searchQuery }) => {
   const handleCloseDetail = () => {
     setSelectedDocument(null);
     setOpenDetail(false);
+  };
+
+  const handleOpenImageDialog = (imageSrc) => {
+    setSelectedImage(imageSrc);
+    setOpenImageDialog(true);
+  };
+
+  const handleCloseImageDialog = () => {
+    setSelectedImage(null);
+    setOpenImageDialog(false);
   };
 
   return (
@@ -384,135 +396,499 @@ const ListUsers = ({ searchQuery }) => {
             onClose={handleCloseDetail}
             maxWidth="md"
             fullWidth
+            PaperProps={{
+              sx: {
+                backgroundColor: "#1e2a38",
+                color: "#ffffff",
+                borderRadius: "12px",
+              },
+            }}
           >
-            <DialogTitle>Chi tiết giấy phép</DialogTitle>
-            <DialogContent dividers>
+            <DialogTitle
+              sx={{
+                backgroundColor: "#0a1929",
+                color: "#ffffff",
+                textAlign: "center",
+                fontWeight: "bold",
+              }}
+            >
+              Chi tiết giấy phép
+            </DialogTitle>
+
+            <DialogContent
+              dividers
+              sx={{
+                backgroundColor: "#1e2a38",
+                color: "#ffffff",
+              }}
+            >
               {selectedDocument && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                   {/* Passport Section */}
                   <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Hộ chiếu
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        marginBottom: 2,
+                        color: "#FF9800",
+                        borderBottom: "2px solid #FF9800",
+                      }}
+                    >
+                      Căn cước công dân:
                     </Typography>
-                    <Typography>
-                      Ngày cấp: {selectedDocument.passport.issueDate}
-                    </Typography>
-                    <Typography>
-                      Nơi cấp: {selectedDocument.passport.issuePlace}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.passport.frontImage}
-                        alt="Passport Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.passport.backImage}
-                        alt="Passport Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                    </Box>
-                  </Box>
 
-                  {/* Driver License Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Bằng lái xe
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.driverLicense.frontImage}
-                        alt="Driver License Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.driverLicense.backImage}
-                        alt="Driver License Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                    </Box>
-                  </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Box>
+                        <Typography>
+                          Ngày cấp:{" "}
+                          {moment(selectedDocument.passport.issueDate).format(
+                            "DD/MM/YYYY"
+                          )}
+                        </Typography>
+                        <Typography>
+                          Nơi cấp: {selectedDocument.passport.issuePlace}
+                        </Typography>
+                      </Box>
 
-                  {/* Criminal Record Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Lý lịch tư pháp
-                    </Typography>
-                    <Typography>
-                      Ngày cấp: {selectedDocument.criminalRecord.issueDate}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.criminalRecord.frontImage}
-                        alt="Criminal Record Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.criminalRecord.backImage}
-                        alt="Criminal Record Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
+                      <Box sx={{ display: "flex", gap: 2 }}>
+                        <Box>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ mb: 1, textAlign: "center" }}
+                          >
+                            Mặt trước
+                          </Typography>
+                          <img
+                            src={selectedDocument.passport.frontImage}
+                            alt="Passport Front"
+                            style={{
+                              width: "150px",
+                              height: "100px",
+                              objectFit: "cover",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                            }}
+                            onClick={() =>
+                              handleOpenImageDialog(
+                                selectedDocument.passport.frontImage
+                              )
+                            }
+                          />
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ mb: 1, textAlign: "center" }}
+                          >
+                            Mặt sau
+                          </Typography>
+                          <img
+                            src={selectedDocument.passport.backImage}
+                            alt="Passport Back"
+                            style={{
+                              width: "150px",
+                              height: "100px",
+                              objectFit: "cover",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                            }}
+                            onClick={() =>
+                              handleOpenImageDialog(
+                                selectedDocument.passport.backImage
+                              )
+                            }
+                          />
+                        </Box>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  {/* Vehicle Registration Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Đăng ký phương tiện
-                    </Typography>
-                    <Typography>
-                      Biển số:{" "}
-                      {selectedDocument.vehicleRegistration.licensePlate}
-                    </Typography>
-                    <Typography>
-                      Loại nhiên liệu:{" "}
-                      {selectedDocument.vehicleRegistration.fuelType}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.vehicleRegistration.frontImage}
-                        alt="Vehicle Registration Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.vehicleRegistration.backImage}
-                        alt="Vehicle Registration Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
+                    {/* Các phần khác với kiểu dáng thống nhất */}
+                    {/* Bằng lái xe */}
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          marginBottom: 2,
+                          color: "#FF9800",
+                          borderBottom: "2px solid #FF9800",
+                        }}
+                      >
+                        Bằng lái xe
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Box>
+                          <Typography>
+                            Số bằng: {selectedDocument.driverLicense.number}
+                          </Typography>
+                          <Typography>
+                            Ngày cấp:{" "}
+                            {moment(
+                              selectedDocument.driverLicense.issueDate
+                            ).format("DD/MM/YYYY")}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt trước
+                            </Typography>
+                            <img
+                              src={selectedDocument.driverLicense.frontImage}
+                              alt="Driver License Front"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.driverLicense.frontImage
+                                )
+                              }
+                            />
+                          </Box>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt sau
+                            </Typography>
+                            <img
+                              src={selectedDocument.driverLicense.backImage}
+                              alt="Driver License Back"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.driverLicense.backImage
+                                )
+                              }
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  {/* Vehicle Insurance Section */}
-                  <Box>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                      Bảo hiểm xe
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, marginTop: 1 }}>
-                      <img
-                        src={selectedDocument.vehicleInsurance.frontImage}
-                        alt="Vehicle Insurance Front"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
-                      <img
-                        src={selectedDocument.vehicleInsurance.backImage}
-                        alt="Vehicle Insurance Back"
-                        width="100"
-                        style={{ borderRadius: 8 }}
-                      />
+                    {/* Lý lịch tư pháp */}
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          marginBottom: 2,
+                          color: "#FF9800",
+                          borderBottom: "2px solid #FF9800",
+                        }}
+                      >
+                        Lý lịch tư pháp
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Box>
+                          <Typography>
+                            Ngày cấp:{" "}
+                            {moment(
+                              selectedDocument.criminalRecord.issueDate
+                            ).format("DD/MM/YYYY")}
+                          </Typography>
+                          <Typography>
+                            Nơi cấp:{" "}
+                            {selectedDocument.criminalRecord.issuePlace}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt trước
+                            </Typography>
+                            <img
+                              src={selectedDocument.criminalRecord.frontImage}
+                              alt="Criminal Record Front"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.criminalRecord.frontImage
+                                )
+                              }
+                            />
+                          </Box>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt sau
+                            </Typography>
+                            <img
+                              src={selectedDocument.criminalRecord.backImage}
+                              alt="Criminal Record Back"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.criminalRecord.backImage
+                                )
+                              }
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {/* Đăng ký phương tiện */}
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          marginBottom: 2,
+                          color: "#FF9800",
+                          borderBottom: "2px solid #FF9800",
+                        }}
+                      >
+                        Đăng ký phương tiện
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Box>
+                          <Typography>
+                            Biển số:{" "}
+                            {selectedDocument.vehicleRegistration.licensePlate}
+                          </Typography>
+                          <Typography>
+                            Loại nhiên liệu:{" "}
+                            {selectedDocument.vehicleRegistration.fuelType}
+                          </Typography>
+                          <Typography>
+                            Ngày đăng ký:{" "}
+                            {moment(
+                              selectedDocument.vehicleRegistration
+                                .registrationDate
+                            ).format("DD/MM/YYYY")}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt trước
+                            </Typography>
+                            <img
+                              src={
+                                selectedDocument.vehicleRegistration.frontImage
+                              }
+                              alt="Vehicle Registration Front"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.vehicleRegistration
+                                    .frontImage
+                                )
+                              }
+                            />
+                          </Box>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt sau
+                            </Typography>
+                            <img
+                              src={
+                                selectedDocument.vehicleRegistration.backImage
+                              }
+                              alt="Vehicle Registration Back"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.vehicleRegistration.backImage
+                                )
+                              }
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {/* Bảo hiểm xe */}
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          marginBottom: 2,
+                          color: "#FF9800",
+                          borderBottom: "2px solid #FF9800",
+                        }}
+                      >
+                        Bảo hiểm xe
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Box>
+                          <Typography>
+                            Số hợp đồng:{" "}
+                            {selectedDocument.vehicleInsurance.contractNumber}
+                          </Typography>
+                          <Typography>
+                            Ngày hiệu lực:{" "}
+                            {moment(
+                              selectedDocument.vehicleInsurance.startDate
+                            ).format("DD/MM/YYYY")}
+                          </Typography>
+                          <Typography>
+                            Ngày hết hạn:{" "}
+                            {moment(
+                              selectedDocument.vehicleInsurance.endDate
+                            ).format("DD/MM/YYYY")}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt trước
+                            </Typography>
+                            <img
+                              src={selectedDocument.vehicleInsurance.frontImage}
+                              alt="Vehicle Insurance Front"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.vehicleInsurance.frontImage
+                                )
+                              }
+                            />
+                          </Box>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ mb: 1, textAlign: "center" }}
+                            >
+                              Mặt sau
+                            </Typography>
+                            <img
+                              src={selectedDocument.vehicleInsurance.backImage}
+                              alt="Vehicle Insurance Back"
+                              style={{
+                                width: "150px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                              onClick={() =>
+                                handleOpenImageDialog(
+                                  selectedDocument.vehicleInsurance.backImage
+                                )
+                              }
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
               )}
             </DialogContent>
+          </Dialog>
+          {/* Dialog hiển thị ảnh lớn */}
+          <Dialog
+            open={openImageDialog}
+            onClose={handleCloseImageDialog}
+            maxWidth="lg"
+            PaperProps={{
+              sx: {
+                backgroundColor: "rgba(0, 0, 0, 0.8)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              },
+            }}
+          >
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt="Enlarged"
+                style={{
+                  maxWidth: "90%",
+                  maxHeight: "90%",
+                  borderRadius: "10px",
+                }}
+              />
+            )}
           </Dialog>
         </TableContainer>
       )}

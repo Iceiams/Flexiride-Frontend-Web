@@ -12,7 +12,7 @@ const Bar = () => {
           padding: "20px",
           textAlign: "center",
           boxShadow: "0px 10px 20px rgba(0,0,0,0.3)",
-          marginBottom: "60px", // Tăng khoảng cách dưới tiêu đề
+          marginBottom: "60px",
         }}
       >
         <Typography
@@ -27,7 +27,6 @@ const Bar = () => {
         </Typography>
       </Box>
 
-      {/* Tạo khoảng cách trước phần nội dung */}
       <Box sx={{ marginTop: "20px" }}>
         <Box height="80vh">
           <BarChart />

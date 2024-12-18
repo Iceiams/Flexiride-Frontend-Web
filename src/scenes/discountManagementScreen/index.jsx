@@ -215,6 +215,8 @@ const VoucherList = () => {
     Modal.confirm({
       title: "Bạn có chắc chắn muốn xóa voucher này?",
       onOk: () => handleDelete(id),
+      okText: "Xóa",
+      cancelText: "Hủy",
     });
   };
 
@@ -456,6 +458,7 @@ const VoucherList = () => {
         name="dateRange"
         label="Thời gian hiệu lực"
         rules={[
+          // { required: true, message: "Ngày bắt đầu và kết thúc là bắt buộc." },
           ({ getFieldValue }) => ({
             validator(_, value) {
               if (!value || !value[0] || !value[1]) {
@@ -463,8 +466,8 @@ const VoucherList = () => {
               }
 
               const [start, end] = value;
-              const now = moment(); // Thời gian hiện tại (cả ngày và giờ)
-              const today = moment().startOf("day"); // Đầu ngày hôm nay (00:00:00)
+              const now = moment();
+              const today = moment().startOf("day");
 
               // Trường hợp 1: So sánh ngày bắt đầu là trong quá khứ
               if (start.isBefore(today)) {
@@ -492,7 +495,7 @@ const VoucherList = () => {
           }),
         ]}
       >
-        <RangePicker showTime style={{ width: "100%" }} />
+        <RangePicker showTime style={{ width: "100%" }} picker="date" />
       </Form.Item>
 
       {/* Validate Tổng số lượng */}
@@ -518,14 +521,8 @@ const VoucherList = () => {
         label="Dịch vụ áp dụng"
         rules={[
           {
-            validator: (_, value) => {
-              if (!value || value.length === 0) {
-                return Promise.reject(
-                  "Vui lòng chọn ít nhất một dịch vụ áp dụng."
-                );
-              }
-              return Promise.resolve();
-            },
+            required: true,
+            message: "Vui lòng chọn ít nhất một dịch vụ áp dụng.",
           },
         ]}
       >

@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
   Snackbar,
-  Alert, // Import Alert
+  Alert,
 } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
@@ -27,11 +27,10 @@ const ListLockedUsers = () => {
   const unlockDriver = async (driverId) => {
     try {
       const response = await api.post(`/drivers/${driverId}/unlock`);
-      setSnackbarMessage(response.data.message); // Lấy thông điệp từ phản hồi API
+      setSnackbarMessage(response.data.message);
       setSnackbarSeverity("success");
-      setOpenSnackbar(true); // Mở Snackbar khi unlock thành công
+      setOpenSnackbar(true);
 
-      // Cập nhật lại danh sách tài xế
       const updatedDrivers = drivers.filter(
         (driver) => driver._id !== driverId
       );
@@ -39,7 +38,6 @@ const ListLockedUsers = () => {
     } catch (error) {
       console.error("Error unlocking driver:", error);
       if (error.response) {
-        // Kiểm tra lỗi session hết hạn
         if (
           error.response.status === 401 ||
           error.response.data.message?.includes("Session expired")
@@ -59,27 +57,32 @@ const ListLockedUsers = () => {
       }
 
       setSnackbarSeverity("error");
-      setOpenSnackbar(true); // Mở Snackbar khi có lỗi
+      setOpenSnackbar(true);
     }
   };
+
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
         const response = await api.get("/getLockedDrivers");
         const fetchedDrivers = response.data.drivers || [];
 
-        if (fetchedDrivers.length === 0) {
-          // Danh sách rỗng, không phải lỗi
+        // Add index to drivers
+        const driversWithIndex = fetchedDrivers.map((driver, index) => ({
+          ...driver,
+          index: index + 1, // Start index from 1
+        }));
+
+        if (driversWithIndex.length === 0) {
           setDrivers([]);
           setError(null);
         } else {
-          // Có tài khoản bị khóa
-          setDrivers(fetchedDrivers);
+          setDrivers(driversWithIndex);
           setError(null);
         }
       } catch (err) {
         console.error("Error fetching drivers:", err);
-        setDrivers([]); // Đảm bảo không có dữ liệu hiển thị khi gặp lỗi
+        setDrivers([]);
         setError(
           "Không thể tải danh sách tài khoản. Có thể xảy ra lỗi hệ thống hoặc kết nối."
         );
@@ -153,7 +156,13 @@ const ListLockedUsers = () => {
   }
 
   const columns = [
-    { field: "index", headerName: "STT", flex: 0.5 },
+    {
+      field: "index",
+      headerName: "STT",
+      flex: 0.5,
+      align: "center",
+      headerAlign: "center",
+    },
     {
       field: "fullName",
       headerName: "Họ và Tên",
@@ -253,12 +262,12 @@ const ListLockedUsers = () => {
           rowHeight={80}
           sx={{
             "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#1F2A40", // Màu nền header
-              color: "#4CCEAC", // Màu chữ header
+              backgroundColor: "#1F2A40",
+              color: "#4CCEAC",
               fontSize: "14px",
             },
             "& .MuiDataGrid-columnHeader": {
-              color: "#F7AB3F", // Màu chữ cho từng ô header
+              color: "#F7AB3F",
               fontWeight: "bold",
             },
             "& .MuiDataGrid-columnSeparator": {
@@ -293,7 +302,6 @@ const ListLockedUsers = () => {
         />
       </Box>
 
-      {/* Snackbar for displaying messages */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
