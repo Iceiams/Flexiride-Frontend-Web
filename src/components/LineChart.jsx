@@ -51,8 +51,8 @@ const RevenueChart = () => {
       }
 
       const response = await axios.get(
-        "https://flexiride.onrender.com/admin/revenueLineStatistic",
-        // "http://localhost:3000/admin/revenueLineStatistic",
+        // "https://flexiride.onrender.com/admin/revenueLineStatistic",
+        "http://localhost:3000/admin/revenueLineStatistic",
         { params }
       );
 
@@ -83,7 +83,7 @@ const RevenueChart = () => {
         formattedDate = `${day}-${month}`;
       } else if (filterType === "month") {
         const [year, month] = item.date.split("-");
-        formattedDate = `${month}-${year}`;
+        formattedDate = `${year}-${month}`;
       }
 
       const row = { date: formattedDate };
