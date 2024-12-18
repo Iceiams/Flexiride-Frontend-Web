@@ -27,15 +27,12 @@ const PendingWithdrawRequests = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  const fetchPendingWithdrawals = async () => {
+  const fetchPendingWithdrawals = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await axios.get(
         "https://flexiride.onrender.com/driver/wallet/withdraw-requests/pending"
       );
-
-      // const response = await axios.get(
-      //   "http://localhost:3000/driver/wallet/withdraw-requests/pending"
-      // );
 
       setWithdrawRequests(
         response.data.pendingWithdrawals.map((req, index) => ({
@@ -49,11 +46,35 @@ const PendingWithdrawRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  // Socket listener
+  useEffect(() => {
+    // Kết nối socket
+    const socket = io("https://flexiride.onrender.com");
+
+    // Lắng nghe sự kiện withdrawRequest
+    socket.on("withdrawRequest", (data) => {
+      // Hiển thị snackbar thông báo
+      showSnackbar(
+        `Yêu cầu rút tiền mới từ tài xế ${data.driverName}. Số tiền: ${data.amount} VND`,
+        "info"
+      );
+
+      // Refresh danh sách
+      fetchPendingWithdrawals();
+    });
+
+    // Cleanup kết nối socket khi component unmount
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchPendingWithdrawals]);
+
+  // Initial fetch
   useEffect(() => {
     fetchPendingWithdrawals();
-  }, []);
+  }, [fetchPendingWithdrawals]);
 
   // Approve a withdrawal request
   const processApproveRequest = async (transactionId) => {
@@ -346,14 +367,30 @@ const PendingWithdrawRequests = () => {
           }}
         />
       </Box>
-
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          action={
+            snackbarSeverity === "info" ? (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  fetchPendingWithdrawals();
+                  handleSnackbarClose();
+                }}
+              >
+                Làm mới
+              </Button>
+            ) : null
+          }
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>
