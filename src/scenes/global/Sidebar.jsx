@@ -136,13 +136,6 @@ const Sidebar = () => {
               Quản Lý
             </Typography>
             <Item
-              title="Thông Tin Người Dùng"
-              to="/listUsers"
-              icon={<PeopleOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
               title="Hồ Sơ Đợi Duyệt"
               to="/pendingDrivers"
               icon={<ContactsOutlinedIcon />}
@@ -150,16 +143,9 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="Yêu Cầu Rút Tiền"
-              to="/pendingWithdrawRequests"
-              icon={<RequestPageSharp />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Tài Khoản Bị Khóa"
-              to="/listLockedUsers"
-              icon={<LockOpen />}
+              title="Thông Tin Người Dùng"
+              to="/listUsers"
+              icon={<PeopleOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -168,6 +154,13 @@ const Sidebar = () => {
               title="Đánh Giá Tài Xế"
               to="/getAllDriversWithReviews"
               icon={<ReviewsOutlined />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Tài Khoản Bị Khóa"
+              to="/listLockedUsers"
+              icon={<LockOpen />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -183,6 +176,13 @@ const Sidebar = () => {
               title="Quản Lý Mã Khuyến Mãi"
               to="/voucher"
               icon={<DiscountOutlined />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Yêu Cầu Rút Tiền"
+              to="/pendingWithdrawRequests"
+              icon={<RequestPageSharp />}
               selected={selected}
               setSelected={setSelected}
             />
