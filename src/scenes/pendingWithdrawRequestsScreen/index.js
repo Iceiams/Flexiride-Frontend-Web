@@ -356,7 +356,6 @@ const PendingWithdrawRequests = () => {
             columnMenuFilter: "Lọc",
             columnMenuHideColumn: "Ẩn cột",
             columnMenuShowColumns: "Hiển thị cột",
-            footerRowSelected: (count) => `${count} hàng đã chọn`,
             footerTotalRows: "Tổng số hàng:",
             columnMenuManageColumns: "Quản lý cột",
             footerPaginationRowsPerPage: "Số hàng mỗi trang",
