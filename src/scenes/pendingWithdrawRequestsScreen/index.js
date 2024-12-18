@@ -29,13 +29,13 @@ const PendingWithdrawRequests = () => {
 
   const fetchPendingWithdrawals = async () => {
     try {
-      const response = await axios.get(
-        "https://flexiride.onrender.com/driver/wallet/withdraw-requests/pending"
-      );
-
       // const response = await axios.get(
-      //   "http://localhost:3000/driver/wallet/withdraw-requests/pending"
+      //   "https://flexiride.onrender.com/driver/wallet/withdraw-requests/pending"
       // );
+
+      const response = await axios.get(
+        "http://localhost:3000/driver/wallet/withdraw-requests/pending"
+      );
 
       setWithdrawRequests(
         response.data.pendingWithdrawals.map((req, index) => ({
@@ -50,23 +50,30 @@ const PendingWithdrawRequests = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
-    fetchPendingWithdrawals();
+    socket.on("withdrawRequest", (data) => {
+      console.log("Received withdraw request:", data);
+      // Update your UI or state
+      fetchPendingWithdrawals(); // Refresh the list
+    });
+
+    return () => {
+      socket.off("withdrawRequest");
+    };
   }, []);
 
   // Approve a withdrawal request
   const processApproveRequest = async (transactionId) => {
     try {
-      const response = await axios.post(
-        "https://flexiride.onrender.com/driver/wallet/withdraw-request/approve",
-        { transactionId }
-      );
-
       // const response = await axios.post(
-      //   "http://localhost:3000/driver/wallet/withdraw-request/approve",
+      //   "https://flexiride.onrender.com/driver/wallet/withdraw-request/approve",
       //   { transactionId }
       // );
+
+      const response = await axios.post(
+        "http://localhost:3000/driver/wallet/withdraw-request/approve",
+        { transactionId }
+      );
 
       if (response.data.success) {
         showSnackbar("Yêu cầu rút tiền đã được phê duyệt.", "success");
@@ -91,15 +98,15 @@ const PendingWithdrawRequests = () => {
 
   const processCompleteRequest = async (transactionId) => {
     try {
-      const response = await axios.post(
-        "https://flexiride.onrender.com/driver/wallet/withdraw-request/complete",
-        { transactionId }
-      );
-
       // const response = await axios.post(
-      //   "http://localhost:3000/driver/wallet/withdraw-request/complete",
+      //   "https://flexiride.onrender.com/driver/wallet/withdraw-request/complete",
       //   { transactionId }
       // );
+
+      const response = await axios.post(
+        "http://localhost:3000/driver/wallet/withdraw-request/complete",
+        { transactionId }
+      );
       if (response.data.success) {
         showSnackbar("Giao dịch đã được hoàn tất.", "success");
 
