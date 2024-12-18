@@ -39,6 +39,8 @@ const VoucherList = () => {
   const [editingVoucher, setEditingVoucher] = useState(null);
   const [form] = Form.useForm();
   const formatDate = (date) => moment(date).format("DD/MM/YYYY");
+  const formatCurrency = (value) =>
+    `${new Intl.NumberFormat("vi-VN").format(value || 0)} VND`;
 
   const fetchServiceOptions = async () => {
     try {
@@ -300,17 +302,13 @@ const VoucherList = () => {
       title: "Giá trị tối thiểu",
       dataIndex: "min_order_value",
       key: "min_order_value",
-      render: (value) =>
-        `${new Intl.NumberFormat("vi-VN", {
-          style: "currency",
-          currency: "VND",
-        }).format(value || 0)}`,
+      render: (value) => formatCurrency(value),
     },
     {
       title: "Giá trị giảm",
       dataIndex: "value",
       key: "value",
-      render: (value) => `${value.toLocaleString()} VND`,
+      render: (value) => formatCurrency(value),
     },
 
     {
@@ -495,7 +493,12 @@ const VoucherList = () => {
           }),
         ]}
       >
-        <RangePicker showTime style={{ width: "100%" }} picker="date" />
+        <RangePicker
+          locale={vi_VN}
+          showTime
+          style={{ width: "100%" }}
+          picker="date"
+        />
       </Form.Item>
 
       {/* Validate Tổng số lượng */}
