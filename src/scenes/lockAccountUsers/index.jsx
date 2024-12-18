@@ -260,6 +260,7 @@ const ListLockedUsers = () => {
           getRowId={(row) => row._id}
           components={{ Toolbar: GridToolbar }}
           rowHeight={80}
+          disableSelectionOnClick
           sx={{
             "& .MuiDataGrid-columnHeaders": {
               backgroundColor: "#1F2A40",
