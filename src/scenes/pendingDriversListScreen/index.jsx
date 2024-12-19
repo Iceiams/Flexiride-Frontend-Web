@@ -202,6 +202,7 @@ const PendingDrivers = () => {
           </Button>
           <Button
             color="error"
+            sx={{ minWidth: "80px" }}
             onClick={() => updateApprovalStatus(params.row._id, false)}
           >
             Từ chối
