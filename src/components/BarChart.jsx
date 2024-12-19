@@ -42,8 +42,8 @@ const RideStatisticsChart = () => {
       }
 
       const response = await axios.get(
-        `https://flexiride.onrender.com/admin/getRideStatsByTimeRange`,
-        // `http://localhost:3000/admin/getRideStatsByTimeRange`,
+        // `https://flexiride.onrender.com/admin/getRideStatsByTimeRange`,
+        `http://localhost:3000/admin/getRideStatsByTimeRange`,
         { params }
       );
 
